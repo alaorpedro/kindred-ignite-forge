@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
+import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
 const SobreRoute = SobreRouteImport.update({
@@ -76,6 +77,12 @@ const AuthenticatedAppContaRoute = AuthenticatedAppContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppFunisIdLeadsRoute =
+  AuthenticatedAppFunisIdLeadsRouteImport.update({
+    id: '/funis/$id/leads',
+    path: '/funis/$id/leads',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppFunisIdEditarRoute =
   AuthenticatedAppFunisIdEditarRouteImport.update({
     id: '/funis/$id/editar',
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
+  '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
+  '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/f/$slug': typeof FSlugRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
   '/_authenticated/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
+  '/_authenticated/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/f/$slug'
     | '/app/conta'
     | '/app/funis/$id/editar'
+    | '/app/funis/$id/leads'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/f/$slug'
     | '/app/conta'
     | '/app/funis/$id/editar'
+    | '/app/funis/$id/leads'
   id:
     | '__root__'
     | '/'
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/f/$slug'
     | '/_authenticated/app/conta'
     | '/_authenticated/app/funis/$id/editar'
+    | '/_authenticated/app/funis/$id/leads'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContaRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/funis/$id/leads': {
+      id: '/_authenticated/app/funis/$id/leads'
+      path: '/funis/$id/leads'
+      fullPath: '/app/funis/$id/leads'
+      preLoaderRoute: typeof AuthenticatedAppFunisIdLeadsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/funis/$id/editar': {
       id: '/_authenticated/app/funis/$id/editar'
       path: '/funis/$id/editar'
@@ -271,11 +291,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppContaRoute: typeof AuthenticatedAppContaRoute
   AuthenticatedAppFunisIdEditarRoute: typeof AuthenticatedAppFunisIdEditarRoute
+  AuthenticatedAppFunisIdLeadsRoute: typeof AuthenticatedAppFunisIdLeadsRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppContaRoute: AuthenticatedAppContaRoute,
   AuthenticatedAppFunisIdEditarRoute: AuthenticatedAppFunisIdEditarRoute,
+  AuthenticatedAppFunisIdLeadsRoute: AuthenticatedAppFunisIdLeadsRoute,
 }
 
 const AuthenticatedAppRouteWithChildren =
