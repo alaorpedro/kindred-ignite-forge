@@ -889,9 +889,17 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
               )}
               {(step.type === "single" || step.type === "multiple") && (
                 <div className="mt-3 space-y-1.5">
-                  {(cfg.options ?? []).map((o: string) => (
-                    <div key={o} className="px-2 py-1.5 rounded-lg border border-border text-[11px]">{o}</div>
-                  ))}
+                  {(cfg.options ?? []).map((o: any, i: number) => {
+                    const label = typeof o === "string" ? o : o?.label ?? "";
+                    const action = typeof o === "object" ? o?.action : "continue";
+                    return (
+                      <div key={i} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border border-border text-[11px]">
+                        <span className="truncate">{label}</span>
+                        {action === "disqualify" && <span className="shrink-0 text-[9px] font-semibold text-red-600">✕</span>}
+                        {action === "jump" && <span className="shrink-0 text-[9px] font-semibold text-amber-600">↪</span>}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {step.type === "input" && <div className="mt-3 px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.placeholder}</div>}
