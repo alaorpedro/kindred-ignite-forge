@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ContatoRouteImport } from './routes/contato'
@@ -40,6 +41,11 @@ const SobreRoute = SobreRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanosRoute = PlanosRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/contato': typeof ContatoRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/contato': typeof ContatoRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/contato': typeof ContatoRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/contato'
     | '/login'
     | '/planos'
+    | '/privacidade'
     | '/reset-password'
     | '/sobre'
     | '/termos'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/contato'
     | '/login'
     | '/planos'
+    | '/privacidade'
     | '/reset-password'
     | '/sobre'
     | '/termos'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/contato'
     | '/login'
     | '/planos'
+    | '/privacidade'
     | '/reset-password'
     | '/sobre'
     | '/termos'
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   ContatoRoute: typeof ContatoRoute
   LoginRoute: typeof LoginRoute
   PlanosRoute: typeof PlanosRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
@@ -263,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planos': {
@@ -402,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContatoRoute: ContatoRoute,
   LoginRoute: LoginRoute,
   PlanosRoute: PlanosRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
