@@ -37,7 +37,7 @@ function maskPhone(value: string) {
 }
 
 function PublicFunnel() {
-  const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; gtm_id: string | null; meta_pixel_id: string | null }; steps: Step[] };
+  const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null }; steps: Step[] };
   const submit = useServerFn(submitLead);
   const track = useServerFn(trackStep);
   const [index, setIndex] = useState(0);
@@ -121,6 +121,23 @@ function PublicFunnel() {
     else setIndex(index + 1);
   }
 
+  function jumpToStep(stepId: string) {
+    const i = steps.findIndex((s) => s.id === stepId);
+    if (i >= 0) setIndex(i);
+    else setIndex(Math.min(index + 1, steps.length - 1));
+  }
+
+  function disqualify() {
+    const url = funnel.instagram_url?.trim();
+    if (url) {
+      const full = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      window.location.href = full;
+    } else {
+      // sem instagram configurado: encerra o funil
+      setDone(true);
+    }
+  }
+
   if (done) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-secondary/30">
@@ -151,7 +168,7 @@ function PublicFunnel() {
           className="rounded-3xl bg-background border border-border shadow-soft p-8"
           style={step.config?.bgColor ? { backgroundColor: step.config.bgColor } : undefined}
         >
-          <StepView step={step} onNext={next} isLast={isLast} />
+          <StepView step={step} onNext={next} onJump={jumpToStep} onDisqualify={disqualify} isLast={isLast} />
         </div>
         <p className="text-center text-xs text-muted-foreground mt-6">Etapa {index + 1} de {steps.length}</p>
       </div>
