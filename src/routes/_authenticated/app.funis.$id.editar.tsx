@@ -196,7 +196,7 @@ function EditFunnel() {
         <aside className="hidden lg:block">
           <div className="sticky top-6">
             <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Preview</p>
-            <PhonePreview step={current} />
+            <PhonePreview step={current} clinicName={funnel.clinic_name} clinicLogo={funnel.clinic_logo_url} />
           </div>
         </aside>
       </div>
@@ -459,7 +459,7 @@ function ClinicLogoUpload({ value, onChange }: { value: string | null; onChange:
   );
 }
 
-function PhonePreview({ step }: { step: Step | null }) {
+function PhonePreview({ step, clinicName, clinicLogo }: { step: Step | null; clinicName?: string | null; clinicLogo?: string | null }) {
   const cfg = step?.config ?? {};
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
   const btnCls =
@@ -484,6 +484,12 @@ function PhonePreview({ step }: { step: Step | null }) {
     <div className="mx-auto w-[260px] aspect-[9/19] rounded-[2.5rem] border-8 border-foreground shadow-card p-4 overflow-hidden" style={{ backgroundColor: cfg.bgColor || undefined }}>
       <div className={`h-full flex flex-col ${align}`}>
         <div className="h-1.5 w-16 bg-foreground/20 rounded-full mx-auto mb-4" />
+        {(clinicName || clinicLogo) && (
+          <div className="flex items-center gap-2 pb-2 mb-3 border-b border-border">
+            {clinicLogo && <img src={clinicLogo} alt="" className="h-6 w-6 rounded-full object-cover" />}
+            {clinicName && <span className="text-[11px] font-semibold truncate">{clinicName}</span>}
+          </div>
+        )}
         {!step ? (
           <p className="text-xs text-muted-foreground text-center mt-10">Sem etapa selecionada</p>
         ) : (
