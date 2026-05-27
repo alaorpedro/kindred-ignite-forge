@@ -35,7 +35,15 @@ function CadastroPage() {
       },
     });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      const msg = error.message;
+      if (msg.toLowerCase().includes("weak and easy to guess") || msg.toLowerCase().includes("password is known")) {
+        toast.error("Essa senha é muito comum e já apareceu em vazamentos de dados. Escolha uma senha mais segura, combinando letras maiúsculas, minúsculas, números e símbolos.");
+      } else {
+        toast.error(msg);
+      }
+      return;
+    }
     toast.success("Cadastro realizado! Verifique seu email para confirmar.");
     navigate({ to: "/login", search: next ? ({ next } as never) : undefined });
   }
