@@ -29,13 +29,6 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   // For anonymous checkouts, try to link by email to an existing auth user.
   let linkedUserId: string | null = userId;
   if (!linkedUserId && customerEmail) {
-    const { data: existing } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("id", "%") // no-op filter; we use auth via admin below
-      .limit(0);
-    void existing;
-    // Look up auth user by email via admin API
     const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const match = list?.users?.find((u: any) => (u.email ?? "").toLowerCase() === customerEmail.toLowerCase());
     if (match) linkedUserId = match.id;
