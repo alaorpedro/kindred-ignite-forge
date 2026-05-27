@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
-type Funnel = { id: string; name: string; slug: string; status: string };
+type Funnel = { id: string; name: string; slug: string; status: string; clinic_name: string | null; clinic_logo_url: string | null };
 
 const STEP_TYPES = [
   { value: "text", label: "Texto / CTA" },
@@ -33,7 +33,7 @@ function EditFunnel() {
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    const { data: f } = await supabase.from("funnels").select("id, name, slug, status").eq("id", id).maybeSingle();
+    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     setFunnel(f as Funnel | null);
     setSteps((s as Step[]) ?? []);
@@ -87,6 +87,13 @@ function EditFunnel() {
     toast.success(status === "published" ? "Funil publicado!" : "Despublicado");
   }
 
+  async function updateFunnel(patch: Partial<Funnel>) {
+    if (!funnel) return;
+    setFunnel({ ...funnel, ...patch });
+    const { error } = await supabase.from("funnels").update(patch).eq("id", funnel.id);
+    if (error) toast.error(error.message);
+  }
+
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
   if (!funnel) return <p>Funil não encontrado.</p>;
 
@@ -129,6 +136,23 @@ function EditFunnel() {
         >
           <Copy className="h-3.5 w-3.5 mr-1" />Copiar
         </Button>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-border bg-background p-4">
+        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Cabeçalho da clínica</p>
+        <div className="grid sm:grid-cols-[120px_1fr] gap-4 items-start">
+          <ClinicLogoUpload value={funnel.clinic_logo_url} onChange={(url) => updateFunnel({ clinic_logo_url: url })} />
+          <div>
+            <Label className="text-xs">Nome da clínica</Label>
+            <Input
+              value={funnel.clinic_name ?? ""}
+              onChange={(e) => setFunnel({ ...funnel, clinic_name: e.target.value })}
+              onBlur={(e) => updateFunnel({ clinic_name: e.target.value })}
+              placeholder="Ex: Clínica Sorriso"
+            />
+            <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
@@ -389,6 +413,45 @@ function ImageUpload({ value, onChange }: { value?: string; onChange: (url: stri
         <label className="mt-1 flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition">
           <Upload className="h-5 w-5 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">{uploading ? "Enviando..." : "Clique para enviar"}</span>
+          <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        </label>
+      )}
+    </div>
+  );
+}
+
+function ClinicLogoUpload({ value, onChange }: { value: string | null; onChange: (url: string | null) => void }) {
+  const [uploading, setUploading] = useState(false);
+  async function handleFile(file: File) {
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login novamente"); return; }
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("funnel-media").upload(path, file, { cacheControl: "3600", upsert: false });
+      if (error) { toast.error(error.message); return; }
+      const { data } = supabase.storage.from("funnel-media").getPublicUrl(path);
+      onChange(data.publicUrl);
+      toast.success("Logo enviado!");
+    } finally {
+      setUploading(false);
+    }
+  }
+  return (
+    <div>
+      <Label className="text-xs">Logo</Label>
+      {value ? (
+        <div className="mt-1 relative w-24 h-24 rounded-full overflow-hidden border border-border">
+          <img src={value} alt="logo" className="w-full h-full object-cover" />
+          <button type="button" onClick={() => onChange(null)} className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/90 border border-border flex items-center justify-center hover:bg-background">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <label className="mt-1 w-24 h-24 flex flex-col items-center justify-center gap-1 rounded-full border-2 border-dashed border-border cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition">
+          <Upload className="h-4 w-4 text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground text-center px-1">{uploading ? "Enviando..." : "Enviar logo"}</span>
           <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </label>
       )}
