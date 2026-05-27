@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-
+import { ToothMark } from "@/components/site/ToothMark";
 
 export function SiteFooter() {
   return (
@@ -7,6 +7,9 @@ export function SiteFooter() {
       <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ToothMark className="h-4 w-4" />
+            </span>
             <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
