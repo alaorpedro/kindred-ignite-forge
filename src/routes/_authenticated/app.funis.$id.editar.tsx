@@ -357,8 +357,6 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
   );
 }
 
-function PhonePreview({ step }: { step: Step | null }) {
-
 function ImageUpload({ value, onChange }: { value?: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
   async function handleFile(file: File) {
