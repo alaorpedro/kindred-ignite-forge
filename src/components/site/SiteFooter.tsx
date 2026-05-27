@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold">Click<span className="text-primary">.Club</span></span>
+            <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Funis de vendas interativos para clínicas e profissionais da saúde.
@@ -37,7 +37,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Click.Club. Todos os direitos reservados.
+        © {new Date().getFullYear()} Clinik.Club. Todos os direitos reservados.
       </div>
     </footer>
   );
