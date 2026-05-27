@@ -68,34 +68,34 @@
 
 :root {
   --radius: 0.875rem;
-  /* Odontolink palette */
-  --background: oklch(0.99 0.005 250);
+  /* Clinik.Club — paleta clínica (azul confiança + verde menta) */
+  --background: oklch(0.985 0.008 220);
   --foreground: oklch(0.15 0.02 260);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.02 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.02 260);
-  /* Royal blue primary */
-  --primary: oklch(0.55 0.24 265);
+  /* Azul clínico — confiança/saúde */
+  --primary: oklch(0.55 0.13 220);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.97 0.01 250);
+  --secondary: oklch(0.97 0.012 220);
   --secondary-foreground: oklch(0.18 0.02 260);
-  --muted: oklch(0.96 0.008 250);
+  --muted: oklch(0.96 0.01 220);
   --muted-foreground: oklch(0.5 0.02 260);
-  /* Neon yellow accent */
-  --accent: oklch(0.94 0.22 115);
-  --accent-foreground: oklch(0.18 0.02 260);
+  /* Verde menta — frescor odontológico */
+  --accent: oklch(0.78 0.12 165);
+  --accent-foreground: oklch(0.2 0.04 180);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.92 0.012 255);
-  --input: oklch(0.92 0.012 255);
-  --ring: oklch(0.55 0.24 265);
-  --brand: oklch(0.55 0.24 265);
+  --border: oklch(0.93 0.012 220);
+  --input: oklch(0.93 0.012 220);
+  --ring: oklch(0.55 0.13 220);
+  --brand: oklch(0.55 0.13 220);
   --brand-foreground: oklch(1 0 0);
-  --highlight: oklch(0.94 0.22 115);
-  --gradient-hero: linear-gradient(135deg, oklch(0.99 0.005 250), oklch(0.96 0.02 260));
-  --shadow-card: 0 12px 40px -16px oklch(0.55 0.24 265 / 0.25);
-  --shadow-soft: 0 2px 12px -4px oklch(0.2 0.04 260 / 0.08);
+  --highlight: oklch(0.78 0.12 165);
+  --gradient-hero: linear-gradient(135deg, oklch(0.985 0.008 220), oklch(0.95 0.03 200));
+  --shadow-card: 0 12px 40px -16px oklch(0.55 0.13 220 / 0.22);
+  --shadow-soft: 0 2px 12px -4px oklch(0.3 0.05 220 / 0.08);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
