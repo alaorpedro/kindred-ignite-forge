@@ -17,7 +17,23 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
 type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null };
-type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null };
+type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
+
+export type QuizOption = { label: string; action: "continue" | "disqualify" | "jump"; targetStepId?: string };
+
+export function normalizeOptions(raw: any): QuizOption[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((o) => {
+      if (typeof o === "string") return { label: o, action: "continue" as const };
+      if (o && typeof o === "object" && typeof o.label === "string") {
+        const action = o.action === "disqualify" || o.action === "jump" ? o.action : "continue";
+        return { label: o.label, action, targetStepId: o.targetStepId };
+      }
+      return null;
+    })
+    .filter(Boolean) as QuizOption[];
+}
 
 const STEP_TYPES = [
   { value: "text", label: "Texto / CTA" },
@@ -31,7 +47,7 @@ const STEP_TYPES = [
 function EditFunnel() {
   const { id } = Route.useParams();
   const [funnel, setFunnel] = useState<Funnel | null>(null);
-  const [clinic, setClinic] = useState<ClinicProfile>({ clinic_name: null, clinic_logo_url: null });
+  const [clinic, setClinic] = useState<ClinicProfile>({ clinic_name: null, clinic_logo_url: null, instagram_url: null });
   const [steps, setSteps] = useState<Step[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,8 +60,8 @@ function EditFunnel() {
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     const { data: u } = await supabase.auth.getUser();
     if (u?.user) {
-      const { data: p } = await supabase.from("profiles").select("clinic_name, clinic_logo_url").eq("id", u.user.id).maybeSingle();
-      if (p) setClinic(p as ClinicProfile);
+      const { data: p } = await supabase.from("profiles").select("clinic_name, clinic_logo_url, instagram_url").eq("id", u.user.id).maybeSingle();
+      if (p) setClinic({ clinic_name: (p as any).clinic_name ?? null, clinic_logo_url: (p as any).clinic_logo_url ?? null, instagram_url: (p as any).instagram_url ?? null });
     }
     setFunnel(f as Funnel | null);
     setSlugDraft((f as Funnel | null)?.slug ?? "");
@@ -272,6 +288,16 @@ function EditFunnel() {
                     <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
                   </div>
                 </div>
+                <div className="mt-4">
+                  <Label className="text-xs">Instagram da clínica</Label>
+                  <Input
+                    value={clinic.instagram_url ?? ""}
+                    onChange={(e) => setClinic((prev) => ({ ...prev, instagram_url: e.target.value }))}
+                    onBlur={(e) => updateClinic({ instagram_url: e.target.value.trim() || null })}
+                    placeholder="https://instagram.com/suaclinica"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-2">Para onde leads desqualificados nas perguntas serão redirecionados.</p>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-border bg-background p-4">
@@ -373,7 +399,7 @@ function EditFunnel() {
         {/* Editor */}
         <section className="rounded-2xl border border-border bg-background p-6">
           {current ? (
-            <StepEditor key={current.id} step={current} onChange={(patch) => updateStep(current.id, patch)} onDelete={() => removeStep(current.id)} onMoveUp={() => move(current.id, -1)} onMoveDown={() => move(current.id, 1)} />
+            <StepEditor key={current.id} step={current} steps={steps} onChange={(patch) => updateStep(current.id, patch)} onDelete={() => removeStep(current.id)} onMoveUp={() => move(current.id, -1)} onMoveDown={() => move(current.id, 1)} />
           ) : (
             <p className="text-muted-foreground text-sm">Selecione uma etapa à esquerda ou crie uma nova.</p>
           )}
@@ -405,7 +431,11 @@ function EditFunnel() {
 function defaultConfig(type: string): any {
   switch (type) {
     case "text": return { title: "Bem-vindo!", body: "Vamos começar?", cta: "Começar" };
-    case "single": return { title: "Escolha uma opção", options: ["Opção A", "Opção B", "Opção C"] };
+    case "single": return { title: "Escolha uma opção", options: [
+      { label: "Opção A", action: "continue" },
+      { label: "Opção B", action: "continue" },
+      { label: "Opção C", action: "continue" },
+    ] };
     case "multiple": return { title: "Selecione todas que se aplicam", options: ["Item 1", "Item 2"], cta: "Continuar" };
     case "input": return { title: "Qual a sua resposta?", placeholder: "Digite aqui...", cta: "Continuar" };
     case "lead": return { title: "Quase lá! Deixe seu contato", cta: "Receber resultado" };
@@ -414,7 +444,7 @@ function defaultConfig(type: string): any {
   }
 }
 
-function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: Step; onChange: (patch: Partial<Step>) => void; onDelete: () => void; onMoveUp: () => void; onMoveDown: () => void }) {
+function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: { step: Step; steps: Step[]; onChange: (patch: Partial<Step>) => void; onDelete: () => void; onMoveUp: () => void; onMoveDown: () => void }) {
   const cfg = step.config ?? {};
   function setCfg(patch: any) { onChange({ config: { ...cfg, ...patch } }); }
 
@@ -460,7 +490,15 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
             </div>
           )}
 
-          {(step.type === "single" || step.type === "multiple") && (
+          {step.type === "single" && (
+            <SingleOptionsEditor
+              options={normalizeOptions(cfg.options)}
+              otherSteps={steps.filter((s) => s.id !== step.id)}
+              onChange={(opts) => setCfg({ options: opts })}
+            />
+          )}
+
+          {step.type === "multiple" && (
             <div>
               <Label className="text-xs">Opções (uma por linha)</Label>
               <Textarea
@@ -585,6 +623,91 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function SingleOptionsEditor({ options, otherSteps, onChange }: { options: QuizOption[]; otherSteps: Step[]; onChange: (opts: QuizOption[]) => void }) {
+  function update(i: number, patch: Partial<QuizOption>) {
+    onChange(options.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  }
+  function remove(i: number) {
+    onChange(options.filter((_, idx) => idx !== i));
+  }
+  function add() {
+    onChange([...options, { label: `Opção ${options.length + 1}`, action: "continue" }]);
+  }
+  return (
+    <div>
+      <Label className="text-xs">Opções e ações</Label>
+      <p className="text-[11px] text-muted-foreground mb-2">Defina o que acontece quando o lead escolhe cada resposta.</p>
+      <div className="space-y-2">
+        {options.map((o, i) => {
+          const badge =
+            o.action === "disqualify"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : o.action === "jump"
+              ? "bg-amber-100 text-amber-700 border-amber-200"
+              : "bg-green-100 text-green-700 border-green-200";
+          const label =
+            o.action === "disqualify" ? "Desqualifica" : o.action === "jump" ? "Pula etapa" : "Continua";
+          return (
+            <div key={i} className="rounded-lg border border-border p-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={o.label}
+                  onChange={(e) => update(i, { label: e.target.value })}
+                  placeholder={`Opção ${i + 1}`}
+                  className="h-8 text-sm"
+                />
+                <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badge}`}>{label}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove(i)} title="Remover">
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-[11px] text-muted-foreground shrink-0">Se escolher:</Label>
+                <Select
+                  value={o.action}
+                  onValueChange={(v) => update(i, { action: v as QuizOption["action"], targetStepId: v === "jump" ? o.targetStepId : undefined })}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="continue">Continuar para próxima etapa</SelectItem>
+                    <SelectItem value="disqualify">Desqualificar → Instagram da clínica</SelectItem>
+                    <SelectItem value="jump">Pular para etapa específica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {o.action === "jump" && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-[11px] text-muted-foreground shrink-0">Ir para:</Label>
+                  <Select
+                    value={o.targetStepId ?? ""}
+                    onValueChange={(v) => update(i, { targetStepId: v })}
+                  >
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione uma etapa" /></SelectTrigger>
+                    <SelectContent>
+                      {otherSteps.length === 0 && <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem outras etapas</div>}
+                      {otherSteps.map((s, idx) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          Etapa: {s.config?.title || `#${idx + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {options.length === 0 && (
+          <p className="text-[11px] text-muted-foreground rounded-lg border border-dashed border-border p-3 text-center">Nenhuma opção. Clique abaixo para adicionar.</p>
+        )}
+      </div>
+      <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={add}>
+        <Plus className="h-3.5 w-3.5 mr-1" />Adicionar opção
+      </Button>
     </div>
   );
 }
@@ -766,9 +889,17 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
               )}
               {(step.type === "single" || step.type === "multiple") && (
                 <div className="mt-3 space-y-1.5">
-                  {(cfg.options ?? []).map((o: string) => (
-                    <div key={o} className="px-2 py-1.5 rounded-lg border border-border text-[11px]">{o}</div>
-                  ))}
+                  {(cfg.options ?? []).map((o: any, i: number) => {
+                    const label = typeof o === "string" ? o : o?.label ?? "";
+                    const action = typeof o === "object" ? o?.action : "continue";
+                    return (
+                      <div key={i} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg border border-border text-[11px]">
+                        <span className="truncate">{label}</span>
+                        {action === "disqualify" && <span className="shrink-0 text-[9px] font-semibold text-red-600">✕</span>}
+                        {action === "jump" && <span className="shrink-0 text-[9px] font-semibold text-amber-600">↪</span>}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {step.type === "input" && <div className="mt-3 px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.placeholder}</div>}
