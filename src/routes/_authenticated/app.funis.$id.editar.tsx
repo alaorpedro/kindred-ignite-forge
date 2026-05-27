@@ -705,3 +705,50 @@ function ElementControls({ el, cfg, onChange, onClose }: { el: ElKey; cfg: any; 
     </div>
   );
 }
+
+function ResizeHandles({ cfg, onChange }: { cfg: any; onChange: (patch: any) => void }) {
+  function startDrag(axis: "x" | "y" | "xy") {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
+      const parent = el.parentElement as HTMLElement;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startW = el.offsetWidth;
+      const startH = el.offsetHeight;
+      const parentW = parent.offsetWidth || 1;
+      let nextPct = typeof cfg.mediaWidthPct === "number" ? cfg.mediaWidthPct : (startW / parentW) * 100;
+      let nextH = typeof cfg.mediaHeight === "number" ? cfg.mediaHeight : startH;
+      function onMove(ev: MouseEvent) {
+        if (axis === "x" || axis === "xy") {
+          const w = Math.max(40, Math.min(parentW, startW + (ev.clientX - startX)));
+          nextPct = Math.round((w / parentW) * 100);
+          el.style.width = `${nextPct}%`;
+        }
+        if (axis === "y" || axis === "xy") {
+          nextH = Math.max(40, Math.min(600, startH + (ev.clientY - startY)));
+          el.style.height = `${nextH}px`;
+        }
+      }
+      function onUp() {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        const patch: any = {};
+        if (axis === "x" || axis === "xy") patch.mediaWidthPct = nextPct;
+        if (axis === "y" || axis === "xy") patch.mediaHeight = nextH;
+        onChange(patch);
+      }
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+  }
+  const base = "absolute bg-primary border border-background shadow rounded-full z-10";
+  return (
+    <>
+      <div onMouseDown={startDrag("x")} onClick={(e) => e.stopPropagation()} className={`${base} w-2.5 h-2.5 right-[-5px] top-1/2 -translate-y-1/2 cursor-ew-resize`} />
+      <div onMouseDown={startDrag("y")} onClick={(e) => e.stopPropagation()} className={`${base} w-2.5 h-2.5 bottom-[-5px] left-1/2 -translate-x-1/2 cursor-ns-resize`} />
+      <div onMouseDown={startDrag("xy")} onClick={(e) => e.stopPropagation()} className={`${base} w-3 h-3 right-[-6px] bottom-[-6px] cursor-nwse-resize`} />
+    </>
+  );
+}
