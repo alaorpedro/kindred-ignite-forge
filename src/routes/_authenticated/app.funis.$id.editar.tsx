@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
-type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null };
+type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null; theme: any };
 type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
 
 export type QuizOption = { label: string; action: "continue" | "disqualify" | "jump"; targetStepId?: string };
@@ -64,7 +64,7 @@ function EditFunnel() {
   }, [settingsParam]);
 
   async function load() {
-    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
+    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, gtm_id, meta_pixel_id, theme").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     const { data: u } = await supabase.auth.getUser();
     if (u?.user) {
@@ -154,6 +154,14 @@ function EditFunnel() {
     } else {
       setSaveStatus("saved");
     }
+  }
+
+  async function updateThankYou(patch: Record<string, any>) {
+    if (!funnel) return;
+    const currentTheme = (funnel.theme && typeof funnel.theme === "object") ? funnel.theme : {};
+    const currentTy = (currentTheme as any).thankYou && typeof (currentTheme as any).thankYou === "object" ? (currentTheme as any).thankYou : {};
+    const nextTheme = { ...currentTheme, thankYou: { ...currentTy, ...patch } };
+    await updateFunnel({ theme: nextTheme });
   }
 
   async function updateClinic(patch: Partial<ClinicProfile>) {
@@ -351,6 +359,8 @@ function EditFunnel() {
                   </div>
                 </div>
               </div>
+
+              <ThankYouSettings funnel={funnel} onPatch={updateThankYou} />
             </DialogContent>
           </Dialog>
           <Button onClick={saveAll} disabled={saveStatus === "saving"} variant="secondary" className="rounded-full font-semibold" size="sm">
@@ -1085,5 +1095,125 @@ function ResizeHandles({ cfg, onChange }: { cfg: any; onChange: (patch: any) => 
       <div onMouseDown={startDrag("y")} onClick={(e) => e.stopPropagation()} className={`${base} w-2.5 h-2.5 bottom-[-5px] left-1/2 -translate-x-1/2 cursor-ns-resize`} />
       <div onMouseDown={startDrag("xy")} onClick={(e) => e.stopPropagation()} className={`${base} w-3 h-3 right-[-6px] bottom-[-6px] cursor-nwse-resize`} />
     </>
+  );
+}
+
+function ThankYouSettings({ funnel, onPatch }: { funnel: Funnel; onPatch: (patch: Record<string, any>) => void }) {
+  const ty = ((funnel.theme && (funnel.theme as any).thankYou) || {}) as Record<string, any>;
+  const [local, setLocal] = useState<Record<string, any>>(ty);
+  useEffect(() => { setLocal(ty); /* eslint-disable-next-line */ }, [funnel.id]);
+  const set = (k: string, v: any) => setLocal((p) => ({ ...p, [k]: v }));
+  const blur = (k: string, v: any) => onPatch({ [k]: typeof v === "string" ? v.trim() || null : v });
+  return (
+    <div className="rounded-2xl border border-border bg-background p-4">
+      <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Tela final · WhatsApp</p>
+      <p className="text-[11px] text-muted-foreground mb-3">Aparece após o lead concluir o funil. O número do WhatsApp é obrigatório para liberar o botão de agendamento.</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2">
+          <Label className="text-xs">WhatsApp da clínica <span className="text-destructive">*</span></Label>
+          <Input
+            value={local.whatsappNumber ?? ""}
+            onChange={(e) => set("whatsappNumber", e.target.value)}
+            onBlur={(e) => blur("whatsappNumber", e.target.value.replace(/\D/g, ""))}
+            placeholder="5511999999999 (com DDI + DDD)"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">Formato internacional, só números. Ex: 55 11 99999-9999 → <code>5511999999999</code>.</p>
+        </div>
+        <div className="sm:col-span-2">
+          <Label className="text-xs">Mensagem pré-preenchida</Label>
+          <Textarea
+            value={local.whatsappMessage ?? ""}
+            onChange={(e) => set("whatsappMessage", e.target.value)}
+            onBlur={(e) => blur("whatsappMessage", e.target.value)}
+            placeholder="Olá! Sou {nome} e acabei de preencher o formulário, gostaria de agendar minha avaliação."
+            rows={2}
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">Use <code>{"{nome}"}</code> e <code>{"{clinica}"}</code> para personalizar.</p>
+        </div>
+        <div>
+          <Label className="text-xs">Título de boas-vindas</Label>
+          <Input
+            value={local.greetingTitle ?? ""}
+            onChange={(e) => set("greetingTitle", e.target.value)}
+            onBlur={(e) => blur("greetingTitle", e.target.value)}
+            placeholder="Solicitação Recebida, {nome}!"
+          />
+        </div>
+        <div>
+          <Label className="text-xs">Texto do botão</Label>
+          <Input
+            value={local.ctaLabel ?? ""}
+            onChange={(e) => set("ctaLabel", e.target.value)}
+            onBlur={(e) => blur("ctaLabel", e.target.value)}
+            placeholder="Iniciar Agendamento no WhatsApp"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label className="text-xs">Subtítulo</Label>
+          <Input
+            value={local.greetingSubtitle ?? ""}
+            onChange={(e) => set("greetingSubtitle", e.target.value)}
+            onBlur={(e) => blur("greetingSubtitle", e.target.value)}
+            placeholder="Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade."
+          />
+        </div>
+        <div>
+          <Label className="text-xs">Nome do(a) atendente</Label>
+          <Input
+            value={local.attendantName ?? ""}
+            onChange={(e) => set("attendantName", e.target.value)}
+            onBlur={(e) => blur("attendantName", e.target.value)}
+            placeholder="Ex: Roberta Silva"
+          />
+        </div>
+        <div>
+          <Label className="text-xs">Cargo</Label>
+          <Input
+            value={local.attendantRole ?? ""}
+            onChange={(e) => set("attendantRole", e.target.value)}
+            onBlur={(e) => blur("attendantRole", e.target.value)}
+            placeholder="Consultora Online"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label className="text-xs">Foto do(a) atendente (URL)</Label>
+          <Input
+            value={local.attendantPhotoUrl ?? ""}
+            onChange={(e) => set("attendantPhotoUrl", e.target.value)}
+            onBlur={(e) => blur("attendantPhotoUrl", e.target.value)}
+            placeholder="https://..."
+          />
+        </div>
+        <div>
+          <Label className="text-xs">Tempo médio de resposta</Label>
+          <Input
+            value={local.responseTime ?? ""}
+            onChange={(e) => set("responseTime", e.target.value)}
+            onBlur={(e) => blur("responseTime", e.target.value)}
+            placeholder="Tempo médio: 2 min"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Nota</Label>
+            <Input
+              value={local.rating ?? ""}
+              onChange={(e) => set("rating", e.target.value)}
+              onBlur={(e) => blur("rating", e.target.value)}
+              placeholder="4.9"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Origem</Label>
+            <Input
+              value={local.reviewsLabel ?? ""}
+              onChange={(e) => set("reviewsLabel", e.target.value)}
+              onBlur={(e) => blur("reviewsLabel", e.target.value)}
+              placeholder="Google Reviews"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
