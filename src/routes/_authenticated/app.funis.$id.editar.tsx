@@ -522,12 +522,31 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
   const ring = (k: ElKey) => editable ? `cursor-pointer rounded transition ${sel === k ? "outline outline-2 outline-primary outline-offset-2" : "hover:outline hover:outline-1 hover:outline-primary/50 hover:outline-offset-2"}` : "";
   const click = (k: ElKey) => (e: React.MouseEvent) => { if (!editable) return; e.stopPropagation(); setSel(sel === k ? null : k); };
 
-  const media = cfg.mediaUrl ? (
+  const hasCustomW = typeof cfg.mediaWidthPct === "number";
+  const hasCustomH = typeof cfg.mediaHeight === "number";
+  const mediaStyle: React.CSSProperties = {
+    width: hasCustomW ? `${cfg.mediaWidthPct}%` : "100%",
+    height: hasCustomH ? `${cfg.mediaHeight}px` : undefined,
+  };
+  const mediaHeightCls = hasCustomH ? "" : MEDIA_SIZES[mediaSize];
+  const mediaInner = cfg.mediaUrl ? (
     cfg.mediaType === "image" ? (
-      <img src={cfg.mediaUrl} alt="" className={`w-full ${MEDIA_SIZES[mediaSize]} object-cover rounded-lg ${ring("media")}`} onClick={click("media")} />
+      <img src={cfg.mediaUrl} alt="" className={`w-full h-full object-cover rounded-lg block`} />
     ) : cfg.mediaType === "video" ? (
-      <div className={`w-full ${MEDIA_SIZES[mediaSize]} rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground ${ring("media")}`} onClick={click("media")}>▶ vídeo</div>
+      <div className="w-full h-full rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground">▶ vídeo</div>
     ) : null
+  ) : null;
+  const media = mediaInner ? (
+    <div
+      className={`relative inline-block ${mediaHeightCls} ${ring("media")}`}
+      style={mediaStyle}
+      onClick={click("media")}
+    >
+      {mediaInner}
+      {editable && sel === "media" && onChange && (
+        <ResizeHandles cfg={cfg} onChange={onChange} />
+      )}
+    </div>
   ) : null;
   const subtitle = cfg.subtitle ? (
     <p className={`${SUBTITLE_SIZES[subtitleSize]} text-muted-foreground mt-1 break-words whitespace-pre-wrap ${ring("subtitle")}`} onClick={click("subtitle")}>{cfg.subtitle}</p>
