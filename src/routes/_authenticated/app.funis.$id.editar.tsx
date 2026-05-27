@@ -833,7 +833,34 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
     cfg.mediaType === "image" ? (
       <img src={cfg.mediaUrl} alt="" className={`w-full h-full object-cover rounded-lg block`} />
     ) : cfg.mediaType === "video" ? (
-      <div className="w-full h-full rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground">▶ vídeo</div>
+      (() => {
+        const url = cfg.mediaUrl as string;
+        const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+        if (yt) {
+          return (
+            <iframe
+              src={`https://www.youtube.com/embed/${yt[1]}`}
+              className="w-full h-full rounded-lg block"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          );
+        }
+        const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+        if (vimeo) {
+          return (
+            <iframe
+              src={`https://player.vimeo.com/video/${vimeo[1]}`}
+              className="w-full h-full rounded-lg block"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          );
+        }
+        return (
+          <video src={url} controls className="w-full h-full object-cover rounded-lg block bg-black" />
+        );
+      })()
     ) : null
   ) : null;
   const media = mediaInner ? (
