@@ -476,7 +476,7 @@ function PhonePreview({ step, clinicName, clinicLogo }: { step: Step | null; cli
       <div className="w-full h-20 rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground">▶ vídeo</div>
     ) : null
   ) : null;
-  const subtitle = cfg.subtitle ? <p className="text-[10px] text-muted-foreground mt-1">{cfg.subtitle}</p> : null;
+  const subtitle = cfg.subtitle ? <p className="text-[10px] text-muted-foreground mt-1 break-words whitespace-pre-wrap">{cfg.subtitle}</p> : null;
   const mediaAbove = cfg.mediaPosition !== "below";
   const subtitleAbove = cfg.subtitlePosition === "above";
 
