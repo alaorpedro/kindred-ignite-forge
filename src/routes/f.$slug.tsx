@@ -87,7 +87,10 @@ function PublicFunnel() {
     <div className="min-h-screen bg-secondary/30 py-10 px-4">
       <div className="max-w-xl mx-auto">
         <Progress value={progress} className="mb-6" />
-        <div className="rounded-3xl bg-background border border-border shadow-soft p-8">
+        <div
+          className="rounded-3xl bg-background border border-border shadow-soft p-8"
+          style={step.config?.bgColor ? { backgroundColor: step.config.bgColor } : undefined}
+        >
           <StepView step={step} onNext={next} isLast={isLast} />
         </div>
         <p className="text-center text-xs text-muted-foreground mt-6">Etapa {index + 1} de {steps.length}</p>
