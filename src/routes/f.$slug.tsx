@@ -116,6 +116,10 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   const [lead, setLead] = useState({ name: "", email: "", phone: "" });
 
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
+  const titleSize = ({ sm: "text-lg", md: "text-2xl", lg: "text-3xl", xl: "text-4xl" } as Record<string, string>)[cfg.titleSize ?? "md"] ?? "text-2xl";
+  const subtitleSizeCls = ({ sm: "text-xs", md: "text-sm", lg: "text-base", xl: "text-lg" } as Record<string, string>)[cfg.subtitleSize ?? "md"] ?? "text-sm";
+  const bodySizeCls = ({ sm: "text-sm", md: "text-base", lg: "text-lg", xl: "text-xl" } as Record<string, string>)[cfg.bodySize ?? "md"] ?? "text-base";
+  const mediaMaxH = ({ sm: "max-h-40", md: "max-h-72", lg: "max-h-96", xl: "max-h-[32rem]" } as Record<string, string>)[cfg.mediaSize ?? "md"] ?? "max-h-72";
   const btnClass = cfg.buttonStyle === "outline"
     ? "mt-6 rounded-full w-full font-semibold border-2 border-primary bg-transparent text-primary hover:bg-primary/5"
     : cfg.buttonStyle === "ghost"
@@ -125,7 +129,7 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   function Media() {
     if (!cfg.mediaUrl) return null;
     if (cfg.mediaType === "image") {
-      return <img src={cfg.mediaUrl} alt="" className="w-full rounded-2xl object-cover max-h-72 mb-4" />;
+      return <img src={cfg.mediaUrl} alt="" className={`w-full rounded-2xl object-cover ${mediaMaxH} mb-4`} />;
     }
     if (cfg.mediaType === "video") {
       const url: string = cfg.mediaUrl;
@@ -137,19 +141,19 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
           </div>
         );
       }
-      return <video src={url} controls className="w-full rounded-2xl mb-4 max-h-72" />;
+      return <video src={url} controls className={`w-full rounded-2xl mb-4 ${mediaMaxH}`} />;
     }
     return null;
   }
 
   const mediaAbove = cfg.mediaPosition !== "below";
   const subtitleAbove = cfg.subtitlePosition === "above";
-  const subtitle = cfg.subtitle ? <p className="text-muted-foreground mt-2">{cfg.subtitle}</p> : null;
+  const subtitle = cfg.subtitle ? <p className={`text-muted-foreground mt-2 ${subtitleSizeCls}`}>{cfg.subtitle}</p> : null;
   const header = (
     <div className={align}>
       {mediaAbove && <Media />}
       {subtitleAbove && subtitle}
-      {cfg.title && <h2 className="text-2xl font-black tracking-tight">{cfg.title}</h2>}
+      {cfg.title && <h2 className={`${titleSize} font-black tracking-tight`}>{cfg.title}</h2>}
       {!subtitleAbove && subtitle}
       {!mediaAbove && <div className="mt-4"><Media /></div>}
     </div>
@@ -159,7 +163,7 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
     return (
       <div>
         {header}
-        {cfg.body && <p className={`mt-3 text-muted-foreground ${align}`}>{cfg.body}</p>}
+        {cfg.body && <p className={`mt-3 text-muted-foreground ${bodySizeCls} ${align}`}>{cfg.body}</p>}
         <Button className={btnClass} onClick={() => onNext()}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
       </div>
     );
