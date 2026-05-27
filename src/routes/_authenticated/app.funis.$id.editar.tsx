@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
-type Funnel = { id: string; name: string; slug: string; status: string; clinic_name: string | null; clinic_logo_url: string | null };
+type Funnel = { id: string; name: string; slug: string; status: string; clinic_name: string | null; clinic_logo_url: string | null; gtm_id: string | null; meta_pixel_id: string | null };
 
 const STEP_TYPES = [
   { value: "text", label: "Texto / CTA" },
@@ -35,7 +35,7 @@ function EditFunnel() {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "modified">("saved");
 
   async function load() {
-    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url").eq("id", id).maybeSingle();
+    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     setFunnel(f as Funnel | null);
     setSteps((s as Step[]) ?? []);
@@ -220,6 +220,31 @@ function EditFunnel() {
               placeholder="Ex: Clínica Sorriso"
             />
             <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-border bg-background p-4">
+        <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Rastreamento</p>
+        <p className="text-[11px] text-muted-foreground mb-3">Os scripts são injetados no funil público e disparam eventos automáticos: <code>PageView</code>, <code>ViewContent</code>, <code>Lead</code> e <code>CompleteRegistration</code> (Meta) — e os equivalentes no <code>dataLayer</code> do GTM.</p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Google Tag Manager ID</Label>
+            <Input
+              value={funnel.gtm_id ?? ""}
+              onChange={(e) => setFunnel({ ...funnel, gtm_id: e.target.value })}
+              onBlur={(e) => updateFunnel({ gtm_id: e.target.value.trim() || null })}
+              placeholder="GTM-XXXXXXX"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Meta Pixel ID</Label>
+            <Input
+              value={funnel.meta_pixel_id ?? ""}
+              onChange={(e) => setFunnel({ ...funnel, meta_pixel_id: e.target.value })}
+              onBlur={(e) => updateFunnel({ meta_pixel_id: e.target.value.trim() || null })}
+              placeholder="1234567890123456"
+            />
           </div>
         </div>
       </div>
