@@ -7,7 +7,7 @@ export function SiteFooter() {
         <div>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background font-bold text-sm">OD</div>
-            <span className="text-lg font-bold">odontolink</span>
+            <span className="text-lg font-bold">Clinik.Club</span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Funis de vendas interativos para clínicas e profissionais da saúde.
@@ -37,7 +37,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} odontolink. Todos os direitos reservados.
+        © {new Date().getFullYear()} Clinik.Club. Todos os direitos reservados.
       </div>
     </footer>
   );
