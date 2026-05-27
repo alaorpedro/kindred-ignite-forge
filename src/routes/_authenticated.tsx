@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login", search: { next: location.href } as never });
+    if (!data.user) throw redirect({ to: "/login", search: { next: location.pathname } as never });
     // Note: plan check happens inside individual app pages (e.g. funnel creation),
     // so users can explore the dashboard and see a clear CTA to activate a plan.
   },
