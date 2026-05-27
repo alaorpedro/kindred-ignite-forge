@@ -139,15 +139,7 @@ function PublicFunnel() {
   }
 
   if (done) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-secondary/30">
-        <div className="max-w-md text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl">✓</div>
-          <h1 className="text-2xl font-bold mt-4">Obrigado!</h1>
-          <p className="text-muted-foreground mt-2">Recebemos suas respostas. Em breve entraremos em contato.</p>
-        </div>
-      </div>
-    );
+    return <ThankYouScreen funnel={funnel} lead={lead} />;
   }
 
   return (
