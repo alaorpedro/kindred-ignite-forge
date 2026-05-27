@@ -30,7 +30,7 @@ function genId() {
 }
 
 function PublicFunnel() {
-  const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null }; steps: Step[] };
+  const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; gtm_id: string | null; meta_pixel_id: string | null }; steps: Step[] };
   const submit = useServerFn(submitLead);
   const track = useServerFn(trackStep);
   const [index, setIndex] = useState(0);
@@ -39,9 +39,48 @@ function PublicFunnel() {
   const [done, setDone] = useState(false);
   const sessionId = useMemo(() => genId(), []);
 
+  // Inject GTM + Meta Pixel once
+  useEffect(() => {
+    if (typeof window === "undefined" || !funnel) return;
+    const w = window as any;
+    if (funnel.gtm_id && !w.__gtmLoaded) {
+      w.__gtmLoaded = true;
+      w.dataLayer = w.dataLayer || [];
+      w.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+      const s = document.createElement("script");
+      s.async = true;
+      s.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(funnel.gtm_id)}`;
+      document.head.appendChild(s);
+    }
+    if (funnel.meta_pixel_id && !w.__fbqLoaded) {
+      w.__fbqLoaded = true;
+      // Meta Pixel base code
+      (function (f: any, b: any, e: any, v: any) {
+        if (f.fbq) return;
+        const n: any = (f.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        });
+        if (!f._fbq) f._fbq = n;
+        n.push = n; n.loaded = true; n.version = "2.0"; n.queue = [];
+        const t = b.createElement(e); t.async = true; t.src = v;
+        const s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+      })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+      w.fbq("init", funnel.meta_pixel_id);
+      w.fbq("track", "PageView");
+    }
+  }, [funnel]);
+
+  function fireEvent(name: "ViewContent" | "Lead" | "CompleteRegistration", payload?: Record<string, unknown>) {
+    if (typeof window === "undefined") return;
+    const w = window as any;
+    if (w.fbq) w.fbq("track", name, payload ?? {});
+    if (w.dataLayer) w.dataLayer.push({ event: `funnel_${name.toLowerCase()}`, funnel_id: funnel?.id, ...payload });
+  }
+
   useEffect(() => {
     if (!funnel) return;
     track({ data: { funnelId: funnel.id, sessionId, stepIndex: index } }).catch(() => {});
+    if (index === 1) fireEvent("ViewContent");
   }, [index, funnel, sessionId, track]);
 
   if (!steps.length) {
@@ -55,6 +94,7 @@ function PublicFunnel() {
   async function finish(finalAnswers: Record<string, unknown>, finalLead: typeof lead) {
     await submit({ data: { funnelId: funnel.id, answers: finalAnswers, ...finalLead } });
     await track({ data: { funnelId: funnel.id, sessionId, stepIndex: index, completed: true } }).catch(() => {});
+    fireEvent("CompleteRegistration");
     setDone(true);
   }
 
@@ -66,7 +106,10 @@ function PublicFunnel() {
     const a = { ...answers, ...(extra ?? {}) };
     const l = { ...lead, ...(leadExtra ?? {}) };
     setAnswers(a);
-    if (leadExtra) setLead(l);
+    if (leadExtra) {
+      setLead(l);
+      fireEvent("Lead");
+    }
     if (isLast) finish(a, l);
     else setIndex(index + 1);
   }
