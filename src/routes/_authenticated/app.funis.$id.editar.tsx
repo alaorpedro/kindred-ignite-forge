@@ -138,6 +138,23 @@ function EditFunnel() {
         </Button>
       </div>
 
+      <div className="mb-6 rounded-2xl border border-border bg-background p-4">
+        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Cabeçalho da clínica</p>
+        <div className="grid sm:grid-cols-[120px_1fr] gap-4 items-start">
+          <ClinicLogoUpload value={funnel.clinic_logo_url} onChange={(url) => updateFunnel({ clinic_logo_url: url })} />
+          <div>
+            <Label className="text-xs">Nome da clínica</Label>
+            <Input
+              value={funnel.clinic_name ?? ""}
+              onChange={(e) => setFunnel({ ...funnel, clinic_name: e.target.value })}
+              onBlur={(e) => updateFunnel({ clinic_name: e.target.value })}
+              placeholder="Ex: Clínica Sorriso"
+            />
+            <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
         {/* Steps list */}
         <aside className="rounded-2xl border border-border bg-background p-4">
