@@ -1,13 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+const StripeEmbeddedCheckout = lazy(() =>
+  import("@/components/StripeEmbeddedCheckout").then((m) => ({ default: m.StripeEmbeddedCheckout })),
+);
 
 export const Route = createFileRoute("/planos")({
   head: () => ({
@@ -135,11 +138,13 @@ function PlanosPage() {
             <DialogTitle>Finalizar assinatura</DialogTitle>
           </DialogHeader>
           {checkoutPriceId && (
-            <StripeEmbeddedCheckout
-              priceId={checkoutPriceId}
-              userId={user?.id}
-              customerEmail={user?.email ?? undefined}
-            />
+            <Suspense fallback={<div className="p-6 text-center text-sm text-muted-foreground">Carregando checkout...</div>}>
+              <StripeEmbeddedCheckout
+                priceId={checkoutPriceId}
+                userId={user?.id}
+                customerEmail={user?.email ?? undefined}
+              />
+            </Suspense>
           )}
         </DialogContent>
       </Dialog>
