@@ -11,11 +11,15 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Entrar — Clinik.Club" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -35,13 +39,13 @@ function LoginPage() {
       }
       return;
     }
-    navigate({ to: "/app" });
+    navigate({ to: (next as never) || "/app" });
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/app" });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + (next || "/app") });
     if (result.error) toast.error("Erro ao entrar com Google");
-    if (!result.redirected && !result.error) navigate({ to: "/app" });
+    if (!result.redirected && !result.error) navigate({ to: (next as never) || "/app" });
   }
 
   return (
@@ -58,7 +62,7 @@ function LoginPage() {
           <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
         </form>
         <p className="mt-6 text-sm text-center text-muted-foreground">
-          Não tem conta? <Link to="/cadastro" className="text-primary font-medium">Cadastre-se</Link>
+          Não tem conta? <Link to="/cadastro" search={next ? ({ next } as never) : undefined} className="text-primary font-medium">Cadastre-se</Link>
         </p>
         <p className="mt-2 text-sm text-center"><Link to="/reset-password" className="text-muted-foreground hover:text-foreground">Esqueci minha senha</Link></p>
       </main>
