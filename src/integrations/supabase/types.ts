@@ -173,6 +173,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          clinic_logo_url: string | null
+          clinic_name: string | null
           created_at: string
           id: string
           name: string | null
@@ -183,6 +185,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
           created_at?: string
           id: string
           name?: string | null
@@ -193,6 +197,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
           created_at?: string
           id?: string
           name?: string | null
