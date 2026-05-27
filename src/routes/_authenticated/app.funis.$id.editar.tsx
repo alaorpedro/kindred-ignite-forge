@@ -405,10 +405,8 @@ function EditFunnel() {
           )}
         </section>
 
-        {/* Preview */}
         <aside className="hidden lg:block">
           <div className="sticky top-6">
-            <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Preview</p>
             <PhonePreview
               step={current}
               clinicName={clinic.clinic_name}
