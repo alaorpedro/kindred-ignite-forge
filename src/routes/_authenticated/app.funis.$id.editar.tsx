@@ -396,7 +396,7 @@ function ImageUpload({ value, onChange }: { value?: string; onChange: (url: stri
   );
 }
 
-function PhonePreviewRedirect({ step }: { step: Step | null }) {
+function PhonePreview({ step }: { step: Step | null }) {
   const cfg = step?.config ?? {};
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
   const btnCls =
