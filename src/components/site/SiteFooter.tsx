@@ -34,8 +34,8 @@ export function SiteFooter() {
         <div>
           <h4 className="text-sm font-semibold mb-3">Legal</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Termos de uso</li>
-            <li>Privacidade</li>
+            <li><Link to="/termos" className="hover:text-foreground">Termos de uso</Link></li>
+            <li><Link to="/privacidade" className="hover:text-foreground">Privacidade</Link></li>
           </ul>
         </div>
       </div>

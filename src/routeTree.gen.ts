@@ -9,8 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ContatoRouteImport } from './routes/contato'
@@ -26,6 +28,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
   path: '/sobre',
@@ -34,6 +41,11 @@ const SobreRoute = SobreRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanosRoute = PlanosRouteImport.update({
@@ -115,8 +127,10 @@ export interface FileRoutesByFullPath {
   '/contato': typeof ContatoRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
+  '/termos': typeof TermosRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
@@ -132,8 +146,10 @@ export interface FileRoutesByTo {
   '/contato': typeof ContatoRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
+  '/termos': typeof TermosRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
@@ -150,8 +166,10 @@ export interface FileRoutesById {
   '/contato': typeof ContatoRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
+  '/termos': typeof TermosRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
@@ -169,8 +187,10 @@ export interface FileRouteTypes {
     | '/contato'
     | '/login'
     | '/planos'
+    | '/privacidade'
     | '/reset-password'
     | '/sobre'
+    | '/termos'
     | '/app'
     | '/checkout/return'
     | '/f/$slug'
@@ -186,8 +206,10 @@ export interface FileRouteTypes {
     | '/contato'
     | '/login'
     | '/planos'
+    | '/privacidade'
     | '/reset-password'
     | '/sobre'
+    | '/termos'
     | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
@@ -203,8 +225,10 @@ export interface FileRouteTypes {
     | '/contato'
     | '/login'
     | '/planos'
+    | '/privacidade'
     | '/reset-password'
     | '/sobre'
+    | '/termos'
     | '/_authenticated/app'
     | '/checkout/return'
     | '/f/$slug'
@@ -222,8 +246,10 @@ export interface RootRouteChildren {
   ContatoRoute: typeof ContatoRoute
   LoginRoute: typeof LoginRoute
   PlanosRoute: typeof PlanosRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SobreRoute: typeof SobreRoute
+  TermosRoute: typeof TermosRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   FSlugRoute: typeof FSlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -231,6 +257,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sobre': {
       id: '/sobre'
       path: '/sobre'
@@ -243,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/planos': {
@@ -382,8 +422,10 @@ const rootRouteChildren: RootRouteChildren = {
   ContatoRoute: ContatoRoute,
   LoginRoute: LoginRoute,
   PlanosRoute: PlanosRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SobreRoute: SobreRoute,
+  TermosRoute: TermosRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   FSlugRoute: FSlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
