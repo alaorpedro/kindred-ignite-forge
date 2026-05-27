@@ -176,7 +176,20 @@ function PublicFunnel() {
   );
 }
 
-function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<string, unknown>, l?: { name?: string; email?: string; phone?: string }) => void; isLast: boolean }) {
+type QuizOpt = { label: string; action: "continue" | "disqualify" | "jump"; targetStepId?: string };
+function normalizeOpts(raw: any): QuizOpt[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((o) => {
+    if (typeof o === "string") return { label: o, action: "continue" as const };
+    if (o && typeof o === "object" && typeof o.label === "string") {
+      const action = o.action === "disqualify" || o.action === "jump" ? o.action : "continue";
+      return { label: o.label, action, targetStepId: o.targetStepId };
+    }
+    return null;
+  }).filter(Boolean) as QuizOpt[];
+}
+
+function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; onNext: (a?: Record<string, unknown>, l?: { name?: string; email?: string; phone?: string }) => void; onJump: (stepId: string) => void; onDisqualify: () => void; isLast: boolean }) {
   const cfg = step.config ?? {};
   const key = `step_${step.id}`;
   const [value, setValue] = useState<any>("");
@@ -243,9 +256,35 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
     );
   }
 
-  if (step.type === "single" || step.type === "multiple") {
-    const opts: string[] = Array.isArray(cfg.options) ? cfg.options : [];
-    const multi = step.type === "multiple";
+  if (step.type === "single") {
+    const opts = normalizeOpts(cfg.options);
+    function choose(o: QuizOpt) {
+      const extra = { [key]: o.label };
+      if (o.action === "disqualify") {
+        onDisqualify();
+        return;
+      }
+      if (o.action === "jump" && o.targetStepId) {
+        onJump(o.targetStepId);
+        return;
+      }
+      onNext(extra);
+    }
+    return (
+      <div>
+        {header}
+        <div className="mt-6 space-y-2">
+          {opts.map((o, i) => (
+            <button key={i} onClick={() => choose(o)} className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-primary/50 transition font-medium">{o.label}</button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (step.type === "multiple") {
+    const opts: string[] = Array.isArray(cfg.options) ? cfg.options.map((o: any) => (typeof o === "string" ? o : o?.label)).filter(Boolean) : [];
+    const multi = true;
     const selected: string[] = Array.isArray(value) ? value : (typeof value === "string" && value ? [value] : []);
     function toggle(o: string) {
       if (multi) {
