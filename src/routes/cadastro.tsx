@@ -10,11 +10,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({ meta: [{ title: "Cadastre-se — Clinik.Club" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    email: typeof s.email === "string" ? s.email : undefined,
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: CadastroPage,
 });
 
 function CadastroPage() {
   const navigate = useNavigate();
+  const { email: prefEmail, next } = Route.useSearch();
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -25,20 +30,20 @@ function CadastroPage() {
       email: String(fd.get("email")),
       password: String(fd.get("password")),
       options: {
-        emailRedirectTo: window.location.origin + "/app",
+        emailRedirectTo: window.location.origin + (next || "/app"),
         data: { name: String(fd.get("name")) },
       },
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Cadastro realizado! Verifique seu email para confirmar.");
-    navigate({ to: "/login" });
+    navigate({ to: "/login", search: next ? ({ next } as never) : undefined });
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/app" });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + (next || "/app") });
     if (result.error) toast.error("Erro ao cadastrar com Google");
-    if (!result.redirected && !result.error) navigate({ to: "/app" });
+    if (!result.redirected && !result.error) navigate({ to: (next as never) || "/app" });
   }
 
   return (
@@ -51,7 +56,7 @@ function CadastroPage() {
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
           <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required className="mt-1.5" /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" /></div>
+          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" defaultValue={prefEmail} readOnly={!!prefEmail} /></div>
           <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" minLength={6} required className="mt-1.5" /></div>
           <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Criando..." : "Criar conta"}</Button>
         </form>
