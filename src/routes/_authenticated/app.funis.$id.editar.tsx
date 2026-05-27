@@ -1176,10 +1176,10 @@ function ThankYouSettings({ funnel, onPatch }: { funnel: Funnel; onPatch: (patch
           />
         </div>
         <div className="sm:col-span-2">
-          <Label className="text-xs">Foto do(a) atendente (URL)</Label>
+          <Label className="text-xs">Foto do(a) atendente</Label>
           <AttendantPhotoUpload
             value={local.attendantPhotoUrl ?? ""}
-            onChange={(url) => {
+            onChange={(url: string) => {
               set("attendantPhotoUrl", url);
               blur("attendantPhotoUrl", url);
             }}
