@@ -25,7 +25,7 @@ const plans = [
   {
     name: "Starter", price: "R$ 99", period: "/mês", priceId: "starter_monthly",
     desc: "Para profissionais começando a vender online.",
-    features: ["1 funil ativo", "Até 100 leads/mês", "Analytics básico", "Suporte por email"],
+    features: ["1 funil ativo", "Até 400 leads/mês", "Analytics básico", "Suporte por email"],
     cta: "Assinar Starter", highlight: false,
   },
   {
