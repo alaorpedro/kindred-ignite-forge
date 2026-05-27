@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
-type Funnel = { id: string; name: string; slug: string; status: string };
+type Funnel = { id: string; name: string; slug: string; status: string; clinic_name: string | null; clinic_logo_url: string | null };
 
 const STEP_TYPES = [
   { value: "text", label: "Texto / CTA" },
@@ -33,7 +33,7 @@ function EditFunnel() {
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    const { data: f } = await supabase.from("funnels").select("id, name, slug, status").eq("id", id).maybeSingle();
+    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     setFunnel(f as Funnel | null);
     setSteps((s as Step[]) ?? []);
@@ -85,6 +85,13 @@ function EditFunnel() {
     if (error) return toast.error(error.message);
     setFunnel({ ...funnel, status });
     toast.success(status === "published" ? "Funil publicado!" : "Despublicado");
+  }
+
+  async function updateFunnel(patch: Partial<Funnel>) {
+    if (!funnel) return;
+    setFunnel({ ...funnel, ...patch });
+    const { error } = await supabase.from("funnels").update(patch).eq("id", funnel.id);
+    if (error) toast.error(error.message);
   }
 
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
