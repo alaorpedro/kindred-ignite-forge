@@ -594,7 +594,7 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
               )}
               {(step.type === "single" || step.type === "multiple") && (
                 <div className="mt-3 space-y-1.5">
-                  {(cfg.options ?? []).slice(0, 4).map((o: string) => (
+                  {(cfg.options ?? []).map((o: string) => (
                     <div key={o} className="px-2 py-1.5 rounded-lg border border-border text-[11px]">{o}</div>
                   ))}
                 </div>
