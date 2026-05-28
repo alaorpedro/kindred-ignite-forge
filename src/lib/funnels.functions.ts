@@ -168,3 +168,11 @@ export const trackStep = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+export const deleteFunnel = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ funnelId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const { error } = await supabaseAdmin.from("funnels").delete().eq("id", data.funnelId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
