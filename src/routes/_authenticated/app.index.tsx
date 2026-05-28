@@ -133,6 +133,34 @@ function AppHome() {
           </Button>
         </div>
       )}
+      {usage && (() => {
+        const funnelsPct = usage.maxFunnels ? usage.funnelsUsed / usage.maxFunnels : 0;
+        const leadsPct = usage.maxLeadsPerMonth ? usage.leadsUsedThisMonth / usage.maxLeadsPerMonth : 0;
+        const alert = funnelsPct >= 0.8 || leadsPct >= 0.8;
+        if (!alert) return null;
+        const funnelsAtLimit = usage.maxFunnels !== null && usage.funnelsUsed >= usage.maxFunnels;
+        const leadsAtLimit = usage.leadsUsedThisMonth >= usage.maxLeadsPerMonth;
+        const critical = funnelsAtLimit || leadsAtLimit;
+        return (
+          <div className={`mb-6 rounded-2xl border p-5 flex items-center gap-4 ${critical ? "border-destructive/30 bg-destructive/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${critical ? "bg-destructive/15 text-destructive" : "bg-amber-500/15 text-amber-600"}`}>
+              <Crown className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0 text-sm">
+              <h3 className="font-bold">{critical ? "Limite do plano atingido" : "Você está perto do limite do seu plano"}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {usage.maxFunnels !== null && (
+                  <>Funis: <strong>{usage.funnelsUsed}/{usage.maxFunnels}</strong>. </>
+                )}
+                Leads este mês: <strong>{usage.leadsUsedThisMonth.toLocaleString("pt-BR")}/{usage.maxLeadsPerMonth.toLocaleString("pt-BR")}</strong>.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => setPlansOpen(true)} className="rounded-full font-semibold shrink-0">
+              Fazer upgrade
+            </Button>
+          </div>
+        );
+      })()}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>
