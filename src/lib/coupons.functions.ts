@@ -41,9 +41,10 @@ export const listCoupons = createServerFn({ method: "GET" })
     await ensureAdmin(context.userId);
     try {
       const stripe = createStripeClient(data.environment);
-      const codes = await stripe.promotionCodes.list({ limit: 100, expand: ["data.coupon"] });
-      const coupons: CouponRow[] = codes.data.map((pc) => {
-        const c = pc.coupon;
+      const codes = await stripe.promotionCodes.list({ limit: 100, expand: ["data.promotion.coupon"] });
+      const coupons: CouponRow[] = codes.data.flatMap((pc) => {
+        const c = pc.promotion.coupon;
+        if (!c || typeof c === "string") return [];
         return {
           promotion_code_id: pc.id,
           code: pc.code,
@@ -109,7 +110,7 @@ export const createCoupon = createServerFn({ method: "POST" })
           : { amount_off: data.amountOffCents, currency: data.currency ?? "brl" }),
       });
       const pc = await stripe.promotionCodes.create({
-        coupon: coupon.id,
+        promotion: { type: "coupon", coupon: coupon.id },
         code: data.code,
         ...(data.maxRedemptions && { max_redemptions: data.maxRedemptions }),
         ...(data.expiresAt && { expires_at: data.expiresAt }),
