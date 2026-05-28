@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.is_crm_member(uuid, uuid) TO authenticated, anon, service_role;
