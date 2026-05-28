@@ -3,8 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Copy } from "lucide-react";
 import { toast } from "sonner";
+
+const APPS_SCRIPT_CODE = `function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = JSON.parse(e.postData.contents);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Data","Nome","Email","Telefone","Status","Respostas","UTM"]);
+  }
+  sheet.appendRow([
+    data.created_at, data.name, data.email, data.phone,
+    data.status, JSON.stringify(data.answers), JSON.stringify(data.utm)
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
 
 type Funnel = { id: string; slug: string; gtm_id: string | null; meta_pixel_id: string | null; sheets_webhook_url: string | null };
 type Clinic = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
