@@ -2,6 +2,33 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
+async function postToSheetsWebhook(funnelId: string, payload: Record<string, unknown>) {
+  try {
+    const { data: f } = await supabaseAdmin
+      .from("funnels")
+      .select("sheets_webhook_url")
+      .eq("id", funnelId)
+      .maybeSingle();
+    const url = (f as any)?.sheets_webhook_url as string | null | undefined;
+    if (!url) return;
+    if (!/^https:\/\/script\.google\.com\//.test(url)) return;
+    // fire-and-forget; Apps Script web apps may take a few seconds
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+      redirect: "follow",
+    })
+      .catch((e) => console.error("[sheets-webhook] error", e?.message ?? e))
+      .finally(() => clearTimeout(timeout));
+  } catch (e) {
+    console.error("[sheets-webhook] lookup error", e);
+  }
+}
+
 export const getPublicFunnel = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => {
     if (!d?.slug || typeof d.slug !== "string" || d.slug.length > 200) throw new Error("slug inválido");
@@ -72,6 +99,18 @@ export const submitLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
+    await postToSheetsWebhook(data.funnelId, {
+      type: "lead",
+      status: "completed",
+      funnel_id: data.funnelId,
+      session_id: data.sessionId ?? null,
+      name: data.name ?? null,
+      email: data.email ?? null,
+      phone: data.phone ?? null,
+      answers: data.answers ?? {},
+      utm: data.utm ?? {},
+      created_at: new Date().toISOString(),
+    });
     return { ok: true };
   });
 
