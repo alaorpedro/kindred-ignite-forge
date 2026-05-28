@@ -99,6 +99,18 @@ export const submitLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
+    await postToSheetsWebhook(data.funnelId, {
+      type: "lead",
+      status: "completed",
+      funnel_id: data.funnelId,
+      session_id: data.sessionId ?? null,
+      name: data.name ?? null,
+      email: data.email ?? null,
+      phone: data.phone ?? null,
+      answers: data.answers ?? {},
+      utm: data.utm ?? {},
+      created_at: new Date().toISOString(),
+    });
     return { ok: true };
   });
 
