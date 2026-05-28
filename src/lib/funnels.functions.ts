@@ -308,3 +308,70 @@ export const deleteFunnel = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const createFunnelChecked = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      name: z.string().trim().min(1).max(120),
+      slug: z
+        .string()
+        .trim()
+        .min(1)
+        .max(80)
+        .regex(/^[a-z0-9-]+$/, "slug inválido"),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const env = getPaymentsEnv();
+    const priceId = await getActivePriceId(userId, env);
+    const limits = getPlanLimits(priceId);
+    if (limits.maxFunnels === 0) {
+      throw new Error("Você precisa de um plano ativo para criar funis.");
+    }
+    const { count } = await supabaseAdmin
+      .from("funnels")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId);
+    const used = count ?? 0;
+    if (used >= limits.maxFunnels) {
+      throw new Error(
+        `Seu plano (${limits.tier}) permite até ${limits.maxFunnels} funil${limits.maxFunnels > 1 ? "s" : ""}. Faça upgrade para criar mais.`,
+      );
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("funnels")
+      .insert({ name: data.name, slug: data.slug, owner_id: userId })
+      .select()
+      .single();
+    if (error) {
+      if ((error as any).code === "23505" || /duplicate|unique/i.test(error.message)) {
+        throw new Error("Já existe um funil com esse nome. Escolha outro.");
+      }
+      throw new Error(error.message);
+    }
+    return row;
+  });
+
+export const getPlanUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const env = getPaymentsEnv();
+    const priceId = await getActivePriceId(userId, env);
+    const limits = getPlanLimits(priceId);
+    const { count } = await supabaseAdmin
+      .from("funnels")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId);
+    const leadsUsedThisMonth = await countLeadsThisMonthForOwner(userId);
+    return {
+      tier: limits.tier,
+      hasPlan: limits !== FREE_LIMITS,
+      maxFunnels: Number.isFinite(limits.maxFunnels) ? limits.maxFunnels : null,
+      maxLeadsPerMonth: limits.maxLeadsPerMonth,
+      funnelsUsed: count ?? 0,
+      leadsUsedThisMonth,
+    };
+  });
