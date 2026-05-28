@@ -44,7 +44,7 @@ const STEP_TYPES = [
   { value: "single", label: "Escolha única" },
   { value: "multiple", label: "Múltipla escolha" },
   { value: "input", label: "Campo de texto" },
-  { value: "lead", label: "Captura de lead" },
+  { value: "lead", label: "Página final" },
   { value: "contact", label: "Nome + Telefone" },
 ];
 
