@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, User, LogOut, Loader2 } from "lucide-react";
+import { LayoutGrid, User, LogOut, Loader2, Users } from "lucide-react";
 
 async function getCurrentUserWithFallback() {
   try {
@@ -47,6 +47,7 @@ function AppLayout() {
 
   const links = [
     { to: "/app", label: "Meus funis", icon: LayoutGrid },
+    { to: "/app/crm", label: "CRM", icon: Users },
     { to: "/app/conta", label: "Minha conta", icon: User },
   ];
 
