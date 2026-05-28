@@ -1,12 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import logo from "@/assets/clinik-club-logo.png";
+import icon from "@/assets/clinik-icon.png";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 bg-secondary/40 mt-24">
       <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
         <div>
-          <img src={logo} alt="Clinik.Club" className="h-7 w-auto" />
+          <div className="flex items-center gap-2">
+            <img src={icon} alt="" className="h-8 w-8" />
+            <img src={logo} alt="Clinik.Club" className="h-7 w-auto" />
+          </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Funis de vendas interativos para clínicas e profissionais da saúde.
           </p>
