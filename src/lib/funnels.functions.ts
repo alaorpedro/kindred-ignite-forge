@@ -1,6 +1,49 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
+
+function getPaymentsEnv(): string {
+  return (process.env.PAYMENTS_ENV ?? "sandbox") as string;
+}
+
+async function getActivePriceId(userId: string, env: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("subscriptions")
+    .select("price_id, status, current_period_end")
+    .eq("user_id", userId)
+    .eq("environment", env)
+    .order("created_at", { ascending: false });
+  const row = (data ?? []).find((s: any) => {
+    const endOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
+    return (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk);
+  });
+  return (row?.price_id as string | undefined) ?? null;
+}
+
+function startOfMonthIso(): string {
+  const d = new Date();
+  d.setUTCDate(1);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+async function countLeadsThisMonthForOwner(ownerId: string): Promise<number> {
+  const { data: funnels } = await supabaseAdmin
+    .from("funnels")
+    .select("id")
+    .eq("owner_id", ownerId);
+  const ids = (funnels ?? []).map((f: any) => f.id);
+  if (!ids.length) return 0;
+  const { count } = await supabaseAdmin
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .in("funnel_id", ids)
+    .eq("status", "completed")
+    .gte("created_at", startOfMonthIso());
+  return count ?? 0;
+}
 
 async function postToSheetsWebhook(funnelId: string, payload: Record<string, unknown>) {
   try {
