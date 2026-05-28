@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, lazy, Suspense } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, lazy, Suspense } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,14 +23,8 @@ const FEATURES = [
 ];
 
 function UpgradePage() {
-  const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUser({ id: data.user.id, email: data.user.email ?? null });
-    });
-  }, []);
 
   return (
     <div className="max-w-3xl mx-auto py-10">
@@ -56,13 +50,9 @@ function UpgradePage() {
             size="lg"
             className="mt-6 rounded-full px-8"
             onClick={() => setOpen(true)}
-            disabled={!user}
           >
             Ativar CRM agora
           </Button>
-          {!user && (
-            <p className="mt-2 text-xs text-muted-foreground">Carregando seus dados…</p>
-          )}
         </div>
         <div className="p-8 md:p-12">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">O que está incluído</h2>
