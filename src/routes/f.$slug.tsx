@@ -531,20 +531,6 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
     );
   }
 
-  if (step.type === "lead") {
-    return (
-      <div>
-        {header}
-        <div className="mt-6 space-y-3">
-          <Input placeholder="Seu nome" value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
-          <Input placeholder="Seu e-mail" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} />
-          <Input placeholder="Seu WhatsApp" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
-        </div>
-        <Cta disabled={!lead.email} onClick={() => onNext(undefined, lead)}>{cfg.cta || "Receber resultado"}</Cta>
-      </div>
-    );
-  }
-
   if (step.type === "contact") {
     return (
       <div>
