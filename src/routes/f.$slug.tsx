@@ -307,7 +307,8 @@ function PublicFunnel() {
   }
 
   if (done) {
-    return <ThankYouScreen funnel={funnel} lead={lead} />;
+    const finalStep = steps.find((s) => s.type === "lead");
+    return <ThankYouScreen funnel={funnel} lead={lead} overrides={finalStep ? { greetingTitle: finalStep.config?.title, greetingSubtitle: finalStep.config?.subtitle } : undefined} />;
   }
 
   if (step?.type === "lead") {
