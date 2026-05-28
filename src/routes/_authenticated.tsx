@@ -97,10 +97,10 @@ function AppLayout() {
       </aside>
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-30">
-          <a href="/" className="flex items-center gap-2" aria-label="Clinik.Club">
+          <Link to="/" className="flex items-center gap-2" aria-label="Clinik.Club">
             <img src={icon} alt="" className="h-7 w-7" />
             <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
-          </a>
+          </Link>
           <nav className="flex items-center gap-1">
             {links.map((l) => {
               const active = l.to === "/app" ? path === "/app" : path.startsWith(l.to);
