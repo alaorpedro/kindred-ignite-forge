@@ -89,6 +89,24 @@ function AppHome() {
     setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
   }
 
+  async function handleDelete(f: Funnel) {
+    const ok = await showConfirm({
+      title: "Excluir funil?",
+      description: `Tem certeza que deseja excluir "${f.name}"? Esta ação não pode ser desfeita.`,
+      okText: "Excluir",
+      cancelText: "Cancelar",
+      destructive: true,
+    });
+    if (!ok) return;
+    const { error } = await deleteFunnelFn({ data: { funnelId: f.id } });
+    if (error) {
+      toast.error(typeof error === "string" ? error : "Erro ao excluir funil.");
+      return;
+    }
+    toast.success("Funil excluído!");
+    setFunnels((prev) => prev?.filter((x) => x.id !== f.id) ?? null);
+  }
+
   return (
     <div>
       {hasPlan === false && (
