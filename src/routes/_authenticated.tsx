@@ -54,8 +54,8 @@ function AppLayout() {
   return (
     <div className="h-screen flex bg-secondary/30 overflow-hidden">
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
-        <Link to="/" className="flex items-center gap-2 mb-8">
-          <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
+        <Link to="/" className="flex items-center mb-8" aria-label="Clinik.Club">
+          <img src={new URL("@/assets/clinik-club-logo.png", import.meta.url).href} alt="Clinik.Club" className="h-7 w-auto" />
         </Link>
         <nav className="flex-1 space-y-1">
           {links.map((l) => (
