@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,35 +18,42 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const navigate = useNavigate();
   const { next } = Route.useSearch();
   const nextPath = next?.startsWith("/") ? next : "/app";
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
     const fd = new FormData(e.currentTarget);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: String(fd.get("email")), password: String(fd.get("password")),
-    });
-    setLoading(false);
-    if (error) {
-      const msg = error.message;
-      if (msg.toLowerCase().includes("weak and easy to guess") || msg.toLowerCase().includes("password is known")) {
-        toast.error("Essa senha é muito comum e já apareceu em vazamentos de dados. Escolha uma senha mais segura, combinando letras maiúsculas, minúsculas, números e símbolos.");
-      } else {
-        toast.error(msg);
-      }
+    const email = String(fd.get("email") ?? "").trim();
+    const password = String(fd.get("password") ?? "");
+    if (!email || !password) {
+      toast.error("Preencha email e senha para entrar.");
       return;
     }
-    navigate({ to: nextPath as never });
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      window.location.assign(nextPath);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + nextPath });
-    if (result.error) toast.error("Erro ao entrar com Google");
-    if (!result.redirected && !result.error) navigate({ to: nextPath as never });
+    setGoogleLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + nextPath });
+      if (result.error) toast.error("Erro ao entrar com Google");
+      if (!result.redirected && !result.error) window.location.assign(nextPath);
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (
@@ -59,12 +66,14 @@ function LoginPage() {
             ? "Entre para acessar o app. Depois disso, você poderá escolher seu plano."
             : "Acesse sua conta Clinik.Club."}
         </p>
-        <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Entrar com Google</Button>
+        <Button type="button" variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google} disabled={googleLoading || loading}>
+          {googleLoading ? "Abrindo Google..." : "Entrar com Google"}
+        </Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" {...ptValidation("email")} /></div>
-          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" required className="mt-1.5" {...ptValidation("senha")} /></div>
-          <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
+        <form onSubmit={onSubmit} className="space-y-4" noValidate>
+          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" className="mt-1.5" {...ptValidation("email")} /></div>
+          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" className="mt-1.5" {...ptValidation("senha")} /></div>
+          <Button type="submit" disabled={loading || googleLoading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
         </form>
         <p className="mt-6 text-sm text-center text-muted-foreground">
           Não tem conta? <Link to="/cadastro" search={next ? ({ next } as never) : undefined} className="text-primary font-medium">Cadastre-se</Link>
