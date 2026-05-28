@@ -1,0 +1,1 @@
+ALTER TABLE public.leads ADD CONSTRAINT leads_funnel_session_unique UNIQUE (funnel_id, session_id);
