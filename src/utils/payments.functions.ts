@@ -1,6 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getRequest } from "@tanstack/react-start/server";
+
+async function getVerifiedUserIdFromRequest(): Promise<string | undefined> {
+  try {
+    const request = getRequest();
+    const auth = request?.headers?.get("authorization") ?? undefined;
+    if (!auth?.startsWith("Bearer ")) return undefined;
+    const token = auth.slice("Bearer ".length).trim();
+    if (!token) return undefined;
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data?.user) return undefined;
+    return data.user.id;
+  } catch {
+    return undefined;
+  }
+}
 
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
@@ -42,7 +59,6 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator((data: {
     priceId: string;
     customerEmail?: string;
-    userId?: string;
     returnUrl: string;
     environment: StripeEnv;
   }) => {
@@ -51,13 +67,15 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<CheckoutSessionResult> => {
     try {
+      // Never trust client-supplied userId — derive from the verified bearer token.
+      const verifiedUserId = await getVerifiedUserIdFromRequest();
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
       if (!prices.data.length) throw new Error("Price not found");
       const stripePrice = prices.data[0];
 
-      const customerId = (data.customerEmail || data.userId)
-        ? await resolveOrCreateCustomer(stripe, { email: data.customerEmail, userId: data.userId })
+      const customerId = (data.customerEmail || verifiedUserId)
+        ? await resolveOrCreateCustomer(stripe, { email: data.customerEmail, userId: verifiedUserId })
         : undefined;
 
       const session = await stripe.checkout.sessions.create({
@@ -67,12 +85,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         return_url: data.returnUrl,
         ...(customerId && { customer: customerId }),
         metadata: {
-          ...(data.userId && { userId: data.userId }),
+          ...(verifiedUserId && { userId: verifiedUserId }),
           ...(data.customerEmail && { customerEmail: data.customerEmail }),
         },
         subscription_data: {
           metadata: {
-            ...(data.userId && { userId: data.userId }),
+            ...(verifiedUserId && { userId: verifiedUserId }),
             ...(data.customerEmail && { customerEmail: data.customerEmail }),
           },
         },

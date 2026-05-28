@@ -1,6 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function assertCardOwnership(supabase: any, userId: string, cardId: string) {
+  const { data: card } = await supabase
+    .from("crm_lead_cards")
+    .select("id, owner_id")
+    .eq("id", cardId)
+    .maybeSingle();
+  if (!card || card.owner_id !== userId) {
+    throw new Error("Acesso negado");
+  }
+}
+
 const DEFAULT_STAGES = [
   { name: "Novos Leads", color: "blue" },
   { name: "Em Atendimento", color: "amber" },
@@ -118,11 +129,13 @@ export const moveCard = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    await assertCardOwnership(supabase, userId, data.cardId);
     const { error } = await supabase
       .from("crm_lead_cards")
       .update({ stage_id: data.stageId, position: data.position, moved_at: new Date().toISOString() })
-      .eq("id", data.cardId);
+      .eq("id", data.cardId)
+      .eq("owner_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -156,11 +169,12 @@ export const getCardDetail = createServerFn({ method: "GET" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: card } = await supabase
       .from("crm_lead_cards")
       .select("id, stage_id, position, status, assignee_id, lead_id, leads!inner(id, name, email, phone, created_at, answers, utm, funnel_id)")
       .eq("id", data.cardId)
+      .eq("owner_id", userId)
       .maybeSingle();
     if (!card) throw new Error("Card não encontrado");
     const [{ data: notes }, { data: events }] = await Promise.all([
@@ -179,6 +193,7 @@ export const addNote = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCardOwnership(supabase, userId, data.cardId);
     const { error } = await supabase
       .from("crm_notes")
       .insert({ lead_card_id: data.cardId, author_id: userId, body: data.body.trim() });
