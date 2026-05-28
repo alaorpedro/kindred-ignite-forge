@@ -8,7 +8,7 @@ import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
 import { PlansDialog } from "@/components/PlansDialog";
 import { showPrompt, showConfirm } from "@/components/ModalDialogs";
 import { useServerFn } from "@tanstack/react-start";
-import { deleteFunnel } from "@/lib/funnels.functions";
+import { createFunnelChecked, deleteFunnel, getPlanUsage } from "@/lib/funnels.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
@@ -22,7 +22,16 @@ function AppHome() {
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{
+    tier: string;
+    maxFunnels: number | null;
+    maxLeadsPerMonth: number;
+    funnelsUsed: number;
+    leadsUsedThisMonth: number;
+  } | null>(null);
   const deleteFunnelFn = useServerFn(deleteFunnel);
+  const createFunnelFn = useServerFn(createFunnelChecked);
+  const getPlanUsageFn = useServerFn(getPlanUsage);
 
   useEffect(() => {
     (async () => {
@@ -53,9 +62,15 @@ function AppHome() {
           const tier = String(priceId).split("_")[0];
           setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
         }
+        try {
+          const u2 = await getPlanUsageFn();
+          setUsage(u2);
+        } catch {
+          // silencioso — uso é apenas informativo
+        }
       }
     })();
-  }, []);
+  }, [getPlanUsageFn]);
 
   async function createFunnel() {
     if (!hasPlan) {
@@ -74,19 +89,14 @@ function AppHome() {
       toast.error("Nome inválido para gerar o link do funil.");
       return;
     }
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const { data, error } = await supabase.from("funnels").insert({ name, slug, owner_id: u.user.id }).select().single();
-    if (error) {
-      if (error.code === "23505" || /duplicate|unique/i.test(error.message)) {
-        toast.error("Já existe um funil com esse nome. Escolha outro.");
-      } else {
-        toast.error(error.message);
-      }
-      return;
+    try {
+      const data = await createFunnelFn({ data: { name, slug } });
+      toast.success("Funil criado!");
+      setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
+      setUsage((prev) => prev ? { ...prev, funnelsUsed: prev.funnelsUsed + 1 } : prev);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar funil.");
     }
-    toast.success("Funil criado!");
-    setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
   }
 
   async function handleDelete(f: Funnel) {
@@ -123,6 +133,34 @@ function AppHome() {
           </Button>
         </div>
       )}
+      {usage && (() => {
+        const funnelsPct = usage.maxFunnels ? usage.funnelsUsed / usage.maxFunnels : 0;
+        const leadsPct = usage.maxLeadsPerMonth ? usage.leadsUsedThisMonth / usage.maxLeadsPerMonth : 0;
+        const alert = funnelsPct >= 0.8 || leadsPct >= 0.8;
+        if (!alert) return null;
+        const funnelsAtLimit = usage.maxFunnels !== null && usage.funnelsUsed >= usage.maxFunnels;
+        const leadsAtLimit = usage.leadsUsedThisMonth >= usage.maxLeadsPerMonth;
+        const critical = funnelsAtLimit || leadsAtLimit;
+        return (
+          <div className={`mb-6 rounded-2xl border p-5 flex items-center gap-4 ${critical ? "border-destructive/30 bg-destructive/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${critical ? "bg-destructive/15 text-destructive" : "bg-amber-500/15 text-amber-600"}`}>
+              <Crown className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0 text-sm">
+              <h3 className="font-bold">{critical ? "Limite do plano atingido" : "Você está perto do limite do seu plano"}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {usage.maxFunnels !== null && (
+                  <>Funis: <strong>{usage.funnelsUsed}/{usage.maxFunnels}</strong>. </>
+                )}
+                Leads este mês: <strong>{usage.leadsUsedThisMonth.toLocaleString("pt-BR")}/{usage.maxLeadsPerMonth.toLocaleString("pt-BR")}</strong>.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => setPlansOpen(true)} className="rounded-full font-semibold shrink-0">
+              Fazer upgrade
+            </Button>
+          </div>
+        );
+      })()}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>

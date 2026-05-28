@@ -1,6 +1,49 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
+
+function getPaymentsEnv(): string {
+  return (process.env.PAYMENTS_ENV ?? "sandbox") as string;
+}
+
+async function getActivePriceId(userId: string, env: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("subscriptions")
+    .select("price_id, status, current_period_end")
+    .eq("user_id", userId)
+    .eq("environment", env)
+    .order("created_at", { ascending: false });
+  const row = (data ?? []).find((s: any) => {
+    const endOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
+    return (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk);
+  });
+  return (row?.price_id as string | undefined) ?? null;
+}
+
+function startOfMonthIso(): string {
+  const d = new Date();
+  d.setUTCDate(1);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+async function countLeadsThisMonthForOwner(ownerId: string): Promise<number> {
+  const { data: funnels } = await supabaseAdmin
+    .from("funnels")
+    .select("id")
+    .eq("owner_id", ownerId);
+  const ids = (funnels ?? []).map((f: any) => f.id);
+  if (!ids.length) return 0;
+  const { count } = await supabaseAdmin
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .in("funnel_id", ids)
+    .eq("status", "completed")
+    .gte("created_at", startOfMonthIso());
+  return count ?? 0;
+}
 
 async function postToSheetsWebhook(funnelId: string, payload: Record<string, unknown>) {
   try {
@@ -77,11 +120,36 @@ export const submitLead = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
-      .select("id")
+      .select("id, owner_id")
       .eq("id", data.funnelId)
       .eq("status", "published")
       .maybeSingle();
     if (!funnel) throw new Error("Funil não encontrado");
+    // Enforce monthly lead cap of the funnel owner's plan.
+    // Allow updates to an existing lead row (same session_id), but block new completed leads beyond the limit.
+    const ownerId = (funnel as any).owner_id as string;
+    const env = getPaymentsEnv();
+    const ownerPriceId = await getActivePriceId(ownerId, env);
+    const ownerLimits = getPlanLimits(ownerPriceId);
+    if (ownerLimits.maxLeadsPerMonth === 0) {
+      throw new Error("Este funil está temporariamente indisponível. Tente novamente mais tarde.");
+    }
+    let isExisting = false;
+    if (data.sessionId) {
+      const { data: existingLead } = await supabaseAdmin
+        .from("leads")
+        .select("id, status")
+        .eq("funnel_id", data.funnelId)
+        .eq("session_id", data.sessionId)
+        .maybeSingle();
+      isExisting = !!existingLead && (existingLead as any).status === "completed";
+    }
+    if (!isExisting) {
+      const used = await countLeadsThisMonthForOwner(ownerId);
+      if (used >= ownerLimits.maxLeadsPerMonth) {
+        throw new Error("Limite mensal de leads deste funil atingido. Tente novamente no próximo mês.");
+      }
+    }
     if (data.sessionId) {
       const { error } = await supabaseAdmin.from("leads").upsert({
         funnel_id: data.funnelId,
@@ -239,4 +307,71 @@ export const deleteFunnel = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("funnels").delete().eq("id", data.funnelId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const createFunnelChecked = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      name: z.string().trim().min(1).max(120),
+      slug: z
+        .string()
+        .trim()
+        .min(1)
+        .max(80)
+        .regex(/^[a-z0-9-]+$/, "slug inválido"),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const env = getPaymentsEnv();
+    const priceId = await getActivePriceId(userId, env);
+    const limits = getPlanLimits(priceId);
+    if (limits.maxFunnels === 0) {
+      throw new Error("Você precisa de um plano ativo para criar funis.");
+    }
+    const { count } = await supabaseAdmin
+      .from("funnels")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId);
+    const used = count ?? 0;
+    if (used >= limits.maxFunnels) {
+      throw new Error(
+        `Seu plano (${limits.tier}) permite até ${limits.maxFunnels} funil${limits.maxFunnels > 1 ? "s" : ""}. Faça upgrade para criar mais.`,
+      );
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("funnels")
+      .insert({ name: data.name, slug: data.slug, owner_id: userId })
+      .select()
+      .single();
+    if (error) {
+      if ((error as any).code === "23505" || /duplicate|unique/i.test(error.message)) {
+        throw new Error("Já existe um funil com esse nome. Escolha outro.");
+      }
+      throw new Error(error.message);
+    }
+    return row;
+  });
+
+export const getPlanUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const env = getPaymentsEnv();
+    const priceId = await getActivePriceId(userId, env);
+    const limits = getPlanLimits(priceId);
+    const { count } = await supabaseAdmin
+      .from("funnels")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId);
+    const leadsUsedThisMonth = await countLeadsThisMonthForOwner(userId);
+    return {
+      tier: limits.tier,
+      hasPlan: limits !== FREE_LIMITS,
+      maxFunnels: Number.isFinite(limits.maxFunnels) ? limits.maxFunnels : null,
+      maxLeadsPerMonth: limits.maxLeadsPerMonth,
+      funnelsUsed: count ?? 0,
+      leadsUsedThisMonth,
+    };
   });
