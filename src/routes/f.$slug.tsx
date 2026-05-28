@@ -409,11 +409,11 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
       if (yt) {
         return (
           <div style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`}>
-            <iframe src={`https://www.youtube.com/embed/${yt[1]}`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
+            <iframe src={`https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
           </div>
         );
       }
-      return <video src={url} controls style={style} className={`${hasW ? "" : "w-full"} rounded-2xl mb-4 ${hCls}`} />;
+      return <video src={url} controls autoPlay muted playsInline style={style} className={`${hasW ? "" : "w-full"} rounded-2xl mb-4 ${hCls}`} />;
     }
     return null;
   }
