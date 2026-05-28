@@ -40,6 +40,13 @@ export const submitLead = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    const { data: funnel } = await supabaseAdmin
+      .from("funnels")
+      .select("id")
+      .eq("id", data.funnelId)
+      .eq("status", "published")
+      .maybeSingle();
+    if (!funnel) throw new Error("Funil não encontrado");
     const { error } = await supabaseAdmin.from("leads").insert({
       funnel_id: data.funnelId,
       email: data.email ?? null,
@@ -55,6 +62,13 @@ export const submitLead = createServerFn({ method: "POST" })
 export const trackStep = createServerFn({ method: "POST" })
   .inputValidator((d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => d)
   .handler(async ({ data }) => {
+    const { data: funnel } = await supabaseAdmin
+      .from("funnels")
+      .select("id")
+      .eq("id", data.funnelId)
+      .eq("status", "published")
+      .maybeSingle();
+    if (!funnel) return { ok: false };
     await supabaseAdmin.from("funnel_responses").insert({
       funnel_id: data.funnelId,
       session_id: data.sessionId,
