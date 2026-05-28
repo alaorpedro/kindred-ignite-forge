@@ -207,6 +207,15 @@ function AppHome() {
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Excluir funil"
+                  onClick={() => handleDelete(f)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ))}
