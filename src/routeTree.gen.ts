@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppCrmRouteImport } from './routes/_authenticated/app.crm'
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
+import { Route as AuthenticatedAppCrmIndexRouteImport } from './routes/_authenticated/app.crm.index'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
@@ -108,6 +109,12 @@ const AuthenticatedAppContaRoute = AuthenticatedAppContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppCrmIndexRoute =
+  AuthenticatedAppCrmIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -141,9 +148,10 @@ export interface FileRoutesByFullPath {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
-  '/app/crm': typeof AuthenticatedAppCrmRoute
+  '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/app/crm/': typeof AuthenticatedAppCrmIndexRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -160,9 +168,9 @@ export interface FileRoutesByTo {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
-  '/app/crm': typeof AuthenticatedAppCrmRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/app/crm': typeof AuthenticatedAppCrmIndexRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -182,9 +190,10 @@ export interface FileRoutesById {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
-  '/_authenticated/app/crm': typeof AuthenticatedAppCrmRoute
+  '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/_authenticated/app/crm/': typeof AuthenticatedAppCrmIndexRoute
   '/_authenticated/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/_authenticated/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/app/crm'
     | '/app/'
     | '/api/public/payments/webhook'
+    | '/app/crm/'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
   fileRoutesByTo: FileRoutesByTo
@@ -223,9 +233,9 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
-    | '/app/crm'
     | '/app'
     | '/api/public/payments/webhook'
+    | '/app/crm'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
   id:
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/crm'
     | '/_authenticated/app/'
     | '/api/public/payments/webhook'
+    | '/_authenticated/app/crm/'
     | '/_authenticated/app/funis/$id/editar'
     | '/_authenticated/app/funis/$id/leads'
   fileRoutesById: FileRoutesById
@@ -381,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContaRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/crm/': {
+      id: '/_authenticated/app/crm/'
+      path: '/'
+      fullPath: '/app/crm/'
+      preLoaderRoute: typeof AuthenticatedAppCrmIndexRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -405,9 +423,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAppCrmRouteChildren {
+  AuthenticatedAppCrmIndexRoute: typeof AuthenticatedAppCrmIndexRoute
+}
+
+const AuthenticatedAppCrmRouteChildren: AuthenticatedAppCrmRouteChildren = {
+  AuthenticatedAppCrmIndexRoute: AuthenticatedAppCrmIndexRoute,
+}
+
+const AuthenticatedAppCrmRouteWithChildren =
+  AuthenticatedAppCrmRoute._addFileChildren(AuthenticatedAppCrmRouteChildren)
+
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppContaRoute: typeof AuthenticatedAppContaRoute
-  AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRoute
+  AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRouteWithChildren
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppFunisIdEditarRoute: typeof AuthenticatedAppFunisIdEditarRoute
   AuthenticatedAppFunisIdLeadsRoute: typeof AuthenticatedAppFunisIdLeadsRoute
@@ -415,7 +444,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppContaRoute: AuthenticatedAppContaRoute,
-  AuthenticatedAppCrmRoute: AuthenticatedAppCrmRoute,
+  AuthenticatedAppCrmRoute: AuthenticatedAppCrmRouteWithChildren,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppFunisIdEditarRoute: AuthenticatedAppFunisIdEditarRoute,
   AuthenticatedAppFunisIdLeadsRoute: AuthenticatedAppFunisIdLeadsRoute,
@@ -454,3 +483,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
