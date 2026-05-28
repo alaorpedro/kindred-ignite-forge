@@ -136,8 +136,8 @@ function PlanosPage() {
         </section>
       </main>
       <SiteFooter />
-      <Dialog open={!!checkoutPriceId} onOpenChange={(open) => !open && setCheckoutPriceId(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+      <Dialog open={!!checkoutPriceId} onOpenChange={(open) => !open && setCheckoutPriceId(null)} modal={false}>
+        <DialogContent allowStripePointerPassThrough className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>Finalizar assinatura</DialogTitle>
           </DialogHeader>
