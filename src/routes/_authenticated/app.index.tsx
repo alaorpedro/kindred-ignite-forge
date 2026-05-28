@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2 } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ function AppHome() {
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [planName, setPlanName] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from("funnels").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
@@ -32,6 +33,21 @@ function AppHome() {
         check_env: (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live",
       });
       setHasPlan(!!ok);
+      if (ok) {
+        const env = (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live";
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("price_id")
+          .eq("user_id", u.user.id)
+          .eq("environment", env)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (sub?.price_id) {
+          const tier = sub.price_id.split("_")[0];
+          setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
+        }
+      }
     })();
   }, []);
 
