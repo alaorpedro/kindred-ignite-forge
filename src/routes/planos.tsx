@@ -103,7 +103,7 @@ function PlanosPage() {
               return (
               <div key={p.name} className={`rounded-3xl border p-8 ${p.highlight ? "bg-foreground text-background border-foreground shadow-card" : "bg-card border-border shadow-soft"}`}>
                 {p.highlight && <span className="inline-block mb-3 rounded-full bg-highlight text-foreground px-3 py-1 text-xs font-bold">Mais popular</span>}
-                <h3 className="text-xl font-bold">{p.name}</h3>
+                <h2 className="text-xl font-bold">{p.name}</h2>
                 <p className={`mt-1 text-sm ${p.highlight ? "text-background/70" : "text-muted-foreground"}`}>{p.desc}</p>
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="text-5xl font-black">{current.price}</span>
