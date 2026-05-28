@@ -310,6 +310,10 @@ function PublicFunnel() {
     return <ThankYouScreen funnel={funnel} lead={lead} />;
   }
 
+  if (step?.type === "lead") {
+    return <ThankYouScreen funnel={funnel} lead={lead} overrides={{ greetingTitle: step.config?.title, greetingSubtitle: step.config?.subtitle }} />;
+  }
+
   return (
     <div className="min-h-screen bg-secondary/30">
       {(funnel.clinic_name || funnel.clinic_logo_url) && (
