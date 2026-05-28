@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { z } from "zod";
 
 export const getPublicFunnel = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => {
@@ -164,5 +165,13 @@ export const trackStep = createServerFn({ method: "POST" })
       step_index: data.stepIndex,
       completed: !!data.completed,
     });
+    return { ok: true };
+  });
+
+export const deleteFunnel = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ funnelId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const { error } = await supabaseAdmin.from("funnels").delete().eq("id", data.funnelId);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });

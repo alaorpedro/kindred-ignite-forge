@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
 import { PlansDialog } from "@/components/PlansDialog";
-import { showPrompt } from "@/components/ModalDialogs";
+import { showPrompt, showConfirm } from "@/components/ModalDialogs";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteFunnel } from "@/lib/funnels.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
@@ -20,6 +22,7 @@ function AppHome() {
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
+  const deleteFunnelFn = useServerFn(deleteFunnel);
 
   useEffect(() => {
     (async () => {
@@ -84,6 +87,24 @@ function AppHome() {
     }
     toast.success("Funil criado!");
     setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
+  }
+
+  async function handleDelete(f: Funnel) {
+    const ok = await showConfirm({
+      title: "Excluir funil?",
+      description: `Tem certeza que deseja excluir "${f.name}"? Esta ação não pode ser desfeita.`,
+      okText: "Excluir",
+      cancelText: "Cancelar",
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteFunnelFn({ data: { funnelId: f.id } });
+      toast.success("Funil excluído!");
+      setFunnels((prev) => prev?.filter((x) => x.id !== f.id) ?? null);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao excluir funil.");
+    }
   }
 
   return (
@@ -185,6 +206,15 @@ function AppHome() {
                   }}
                 >
                   <Copy className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Excluir funil"
+                  onClick={() => handleDelete(f)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
