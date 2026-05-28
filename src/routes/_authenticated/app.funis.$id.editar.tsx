@@ -965,10 +965,19 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
               )}
               {step.type === "input" && <div className="mt-3 px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.placeholder}</div>}
               {step.type === "lead" && (
-                <div className="mt-3 space-y-1.5">
-                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">Nome</div>
-                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">E-mail</div>
-                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">WhatsApp</div>
+                <div className="mt-3 space-y-2">
+                  {[
+                    { n: "1", t: "Triagem Concluída", done: true },
+                    { n: "2", t: "Acesso ao WhatsApp", done: false, active: true },
+                    { n: "3", t: "Agendamento Presencial", done: false },
+                  ].map((s, i) => (
+                    <div key={i} className={`flex items-center gap-2 text-[11px] ${!s.active && !s.done ? "opacity-40" : ""}`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-primary text-primary-foreground" : s.active ? "border-2 border-primary text-primary" : "border-2 border-border text-muted-foreground"}`}>
+                        {s.done ? <span className="text-[8px]">✓</span> : <span className="text-[8px] font-bold">{s.n}</span>}
+                      </div>
+                      <span className="truncate font-medium text-foreground">{s.t}</span>
+                    </div>
+                  ))}
                 </div>
               )}
               {step.type === "contact" && (
