@@ -326,6 +326,40 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
   const [value, setValue] = useState<any>("");
   const [lead, setLead] = useState({ name: "", email: "", phone: "" });
 
+  const delaySec = Math.max(0, Number(cfg.ctaDelaySeconds) || 0);
+  const [ctaReady, setCtaReady] = useState(delaySec === 0);
+  const [remaining, setRemaining] = useState(delaySec);
+  useEffect(() => {
+    setCtaReady(delaySec === 0);
+    setRemaining(delaySec);
+    if (delaySec === 0) return;
+    const startedAt = Date.now();
+    const tick = setInterval(() => {
+      const left = Math.max(0, delaySec - Math.floor((Date.now() - startedAt) / 1000));
+      setRemaining(left);
+      if (left === 0) {
+        setCtaReady(true);
+        clearInterval(tick);
+      }
+    }, 250);
+    return () => clearInterval(tick);
+  }, [step.id, delaySec]);
+
+  function Cta({ disabled, onClick, children }: { disabled?: boolean; onClick: () => void; children: React.ReactNode }) {
+    if (!ctaReady) {
+      return (
+        <p className="mt-6 text-center text-sm text-muted-foreground animate-pulse">
+          Assista ao vídeo para liberar o próximo passo{remaining > 0 ? ` (${remaining}s)` : ""}…
+        </p>
+      );
+    }
+    return (
+      <Button className={`${btnClass} animate-in fade-in duration-500`} disabled={disabled} onClick={onClick}>
+        {children}
+      </Button>
+    );
+  }
+
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
   const titleSize = ({ sm: "text-lg", md: "text-2xl", lg: "text-3xl", xl: "text-4xl" } as Record<string, string>)[cfg.titleSize ?? "md"] ?? "text-2xl";
   const subtitleSizeCls = ({ sm: "text-xs", md: "text-sm", lg: "text-base", xl: "text-lg" } as Record<string, string>)[cfg.subtitleSize ?? "md"] ?? "text-sm";
