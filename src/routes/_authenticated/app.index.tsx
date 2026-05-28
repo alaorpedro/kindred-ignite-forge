@@ -88,13 +88,21 @@ function AppHome() {
           <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>
           <p className="text-muted-foreground mt-1">Crie e gerencie seus funis interativos.</p>
         </div>
-        {hasPlan === false ? (
-          <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold">
-            <Lock className="h-4 w-4 mr-1" />Ativar plano
-          </Button>
-        ) : (
-          <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
-        )}
+        <div className="flex items-center gap-3">
+          {hasPlan && planName && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-xs font-bold border border-primary/20">
+              <Crown className="h-3.5 w-3.5" />
+              Plano {planName}
+            </span>
+          )}
+          {hasPlan === false ? (
+            <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold">
+              <Lock className="h-4 w-4 mr-1" />Ativar plano
+            </Button>
+          ) : (
+            <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
+          )}
+        </div>
       </div>
       {funnels === null ? (
         <p className="text-muted-foreground">Carregando...</p>
