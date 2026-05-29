@@ -185,9 +185,18 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
 export const submitLead = createServerFn({ method: "POST" })
   .inputValidator((d: { funnelId: string; sessionId?: string; answers: Record<string, unknown>; email?: string; name?: string; phone?: string; utm?: Record<string, unknown> }) => {
     if (!d?.funnelId) throw new Error("funnelId obrigatório");
+    assertJsonSize(d.answers, "answers");
+    assertJsonSize(d.utm, "utm");
     return d;
   })
   .handler(async ({ data }) => {
+    await checkAndLogRate("submitLead", {
+      sessionId: data.sessionId ?? null,
+      funnelId: data.funnelId,
+      windowSec: 60,
+      maxPerSession: 5,
+      maxPerIp: 30,
+    });
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
       .select("id, owner_id")
@@ -292,6 +301,8 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
     if (!d?.funnelId) throw new Error("funnelId obrigatório");
     if (!d?.sessionId || typeof d.sessionId !== "string" || d.sessionId.length > 200) throw new Error("sessionId inválido");
     if (typeof d.stepIndex !== "number") throw new Error("stepIndex inválido");
+    assertJsonSize(d.answers ?? {}, "answers");
+    assertJsonSize(d.utm ?? {}, "utm");
     // sanity caps to prevent abuse
     const cap = (v: string | undefined, n: number) => (v ? String(v).slice(0, n) : null);
     return {
@@ -306,6 +317,13 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
+    await checkAndLogRate("upsertPartialLead", {
+      sessionId: data.sessionId,
+      funnelId: data.funnelId,
+      windowSec: 60,
+      maxPerSession: 60,
+      maxPerIp: 200,
+    });
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
       .select("id")
@@ -355,6 +373,13 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
 export const trackStep = createServerFn({ method: "POST" })
   .inputValidator((d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => d)
   .handler(async ({ data }) => {
+    await checkAndLogRate("trackStep", {
+      sessionId: data.sessionId,
+      funnelId: data.funnelId,
+      windowSec: 60,
+      maxPerSession: 120,
+      maxPerIp: 400,
+    });
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
       .select("id")
@@ -372,9 +397,25 @@ export const trackStep = createServerFn({ method: "POST" })
   });
 
 export const deleteFunnel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ funnelId: z.string().uuid() }))
-  .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("funnels").delete().eq("id", data.funnelId);
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: funnel, error: fetchErr } = await supabaseAdmin
+      .from("funnels")
+      .select("id, owner_id")
+      .eq("id", data.funnelId)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!funnel) throw new Error("Funil não encontrado");
+    if ((funnel as any).owner_id !== userId) {
+      throw new Error("Você não tem permissão para excluir este funil.");
+    }
+    const { error } = await supabaseAdmin
+      .from("funnels")
+      .delete()
+      .eq("id", data.funnelId)
+      .eq("owner_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
