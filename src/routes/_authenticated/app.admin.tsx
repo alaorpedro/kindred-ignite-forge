@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -181,6 +181,11 @@ function AdminPage() {
         </div>
         <Button variant="outline" size="sm" onClick={() => customersQuery.refetch()} disabled={customersQuery.isFetching}>
           {customersQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
+        </Button>
+      </div>
+      <div className="mb-6 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="default" className="rounded-full">
+          <Link to="/app/admin/pagamentos"><CreditCard className="h-4 w-4 mr-1.5" /> Pagamentos & assinaturas</Link>
         </Button>
       </div>
 
