@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -6,6 +7,75 @@ import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
 
 function getPaymentsEnv(): string {
   return (process.env.PAYMENTS_ENV ?? "sandbox") as string;
+}
+
+const MAX_JSON_BYTES = 50_000;
+function assertJsonSize(obj: unknown, field: string) {
+  try {
+    const s = JSON.stringify(obj ?? {});
+    if (s.length > MAX_JSON_BYTES) {
+      throw new Error(`Campo ${field} excede o limite de ${MAX_JSON_BYTES} bytes`);
+    }
+  } catch (e: any) {
+    if (e?.message?.startsWith("Campo ")) throw e;
+    throw new Error(`Campo ${field} inválido`);
+  }
+}
+
+function getClientIp(): string | null {
+  try {
+    const req = getRequest();
+    const h = req?.headers;
+    if (!h) return null;
+    const xff = h.get("x-forwarded-for");
+    if (xff) return xff.split(",")[0]!.trim().slice(0, 64);
+    const cf = h.get("cf-connecting-ip");
+    if (cf) return cf.slice(0, 64);
+    const real = h.get("x-real-ip");
+    if (real) return real.slice(0, 64);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function checkAndLogRate(action: string, opts: {
+  sessionId?: string | null;
+  funnelId?: string | null;
+  windowSec: number;
+  maxPerSession: number;
+  maxPerIp: number;
+}) {
+  const ip = getClientIp();
+  const since = new Date(Date.now() - opts.windowSec * 1000).toISOString();
+  if (opts.sessionId) {
+    const { count } = await supabaseAdmin
+      .from("public_action_log")
+      .select("id", { count: "exact", head: true })
+      .eq("action", action)
+      .eq("session_id", opts.sessionId)
+      .gte("created_at", since);
+    if ((count ?? 0) >= opts.maxPerSession) {
+      throw new Error("Muitas requisições. Tente novamente em instantes.");
+    }
+  }
+  if (ip) {
+    const { count } = await supabaseAdmin
+      .from("public_action_log")
+      .select("id", { count: "exact", head: true })
+      .eq("action", action)
+      .eq("ip", ip)
+      .gte("created_at", since);
+    if ((count ?? 0) >= opts.maxPerIp) {
+      throw new Error("Muitas requisições. Tente novamente em instantes.");
+    }
+  }
+  await supabaseAdmin.from("public_action_log").insert({
+    action,
+    session_id: opts.sessionId ?? null,
+    ip,
+    funnel_id: opts.funnelId ?? null,
+  });
 }
 
 async function getActivePriceId(userId: string, env: string): Promise<string | null> {
