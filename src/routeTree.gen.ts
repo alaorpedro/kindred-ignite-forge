@@ -35,6 +35,7 @@ import { Route as AuthenticatedAppCrmRelatoriosRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppCrmPipelinesRouteImport } from './routes/_authenticated/app.crm.pipelines'
 import { Route as AuthenticatedAppCrmLeadsRouteImport } from './routes/_authenticated/app.crm.leads'
 import { Route as AuthenticatedAppCrmConfiguracoesRouteImport } from './routes/_authenticated/app.crm.configuracoes'
+import { Route as AuthenticatedAppAdminPagamentosRouteImport } from './routes/_authenticated/app.admin.pagamentos'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
@@ -174,6 +175,12 @@ const AuthenticatedAppCrmConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAppCrmRoute,
   } as any)
+const AuthenticatedAppAdminPagamentosRoute =
+  AuthenticatedAppAdminPagamentosRouteImport.update({
+    id: '/pagamentos',
+    path: '/pagamentos',
+    getParentRoute: () => AuthenticatedAppAdminRoute,
+  } as any)
 const AuthenticatedAppFunisIdLeadsRoute =
   AuthenticatedAppFunisIdLeadsRouteImport.update({
     id: '/funis/$id/leads',
@@ -201,11 +208,12 @@ export interface FileRoutesByFullPath {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/sitemap/xml': typeof SitemapXmlRoute
-  '/app/admin': typeof AuthenticatedAppAdminRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/app/cupons': typeof AuthenticatedAppCuponsRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
   '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
@@ -229,10 +237,11 @@ export interface FileRoutesByTo {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/sitemap/xml': typeof SitemapXmlRoute
-  '/app/admin': typeof AuthenticatedAppAdminRoute
+  '/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/cupons': typeof AuthenticatedAppCuponsRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
   '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
@@ -259,11 +268,12 @@ export interface FileRoutesById {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/sitemap/xml': typeof SitemapXmlRoute
-  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRouteWithChildren
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
   '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/_authenticated/app/cupons': typeof AuthenticatedAppCuponsRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
   '/_authenticated/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/_authenticated/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
   '/_authenticated/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/app/crm'
     | '/app/cupons'
     | '/app/'
+    | '/app/admin/pagamentos'
     | '/app/crm/configuracoes'
     | '/app/crm/leads'
     | '/app/crm/pipelines'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/app/conta'
     | '/app/cupons'
     | '/app'
+    | '/app/admin/pagamentos'
     | '/app/crm/configuracoes'
     | '/app/crm/leads'
     | '/app/crm/pipelines'
@@ -352,6 +364,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/crm'
     | '/_authenticated/app/cupons'
     | '/_authenticated/app/'
+    | '/_authenticated/app/admin/pagamentos'
     | '/_authenticated/app/crm/configuracoes'
     | '/_authenticated/app/crm/leads'
     | '/_authenticated/app/crm/pipelines'
@@ -564,6 +577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCrmConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAppCrmRoute
     }
+    '/_authenticated/app/admin/pagamentos': {
+      id: '/_authenticated/app/admin/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/app/admin/pagamentos'
+      preLoaderRoute: typeof AuthenticatedAppAdminPagamentosRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/funis/$id/leads': {
       id: '/_authenticated/app/funis/$id/leads'
       path: '/funis/$id/leads'
@@ -580,6 +600,19 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminPagamentosRoute: typeof AuthenticatedAppAdminPagamentosRoute
+}
+
+const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminPagamentosRoute: AuthenticatedAppAdminPagamentosRoute,
+}
+
+const AuthenticatedAppAdminRouteWithChildren =
+  AuthenticatedAppAdminRoute._addFileChildren(
+    AuthenticatedAppAdminRouteChildren,
+  )
 
 interface AuthenticatedAppCrmRouteChildren {
   AuthenticatedAppCrmConfiguracoesRoute: typeof AuthenticatedAppCrmConfiguracoesRoute
@@ -603,7 +636,7 @@ const AuthenticatedAppCrmRouteWithChildren =
   AuthenticatedAppCrmRoute._addFileChildren(AuthenticatedAppCrmRouteChildren)
 
 interface AuthenticatedAppRouteChildren {
-  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRouteWithChildren
   AuthenticatedAppContaRoute: typeof AuthenticatedAppContaRoute
   AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRouteWithChildren
   AuthenticatedAppCuponsRoute: typeof AuthenticatedAppCuponsRoute
@@ -613,7 +646,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
-  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRouteWithChildren,
   AuthenticatedAppContaRoute: AuthenticatedAppContaRoute,
   AuthenticatedAppCrmRoute: AuthenticatedAppCrmRouteWithChildren,
   AuthenticatedAppCuponsRoute: AuthenticatedAppCuponsRoute,
