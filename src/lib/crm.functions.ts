@@ -12,6 +12,21 @@ async function assertCardOwnership(supabase: any, userId: string, cardId: string
   }
 }
 
+async function assertCrmAccess(supabase: any, userId: string) {
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("status, current_period_end, price_id, product_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  const ok = (data ?? []).some((s: any) => {
+    const matchesCrm = s.price_id === "crm_addon_monthly" || s.product_id === "crm_addon";
+    if (!matchesCrm) return false;
+    const endOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
+    return (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk);
+  });
+  if (!ok) throw new Error("CRM add-on inativo");
+}
+
 const DEFAULT_STAGES = [
   { name: "Novos Leads", color: "blue" },
   { name: "Em Atendimento", color: "amber" },
@@ -45,6 +60,7 @@ export const ensureDefaultPipeline = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
     const { data: existing } = await supabase
       .from("crm_pipelines")
       .select("id")
@@ -86,6 +102,7 @@ export const getBoard = createServerFn({ method: "GET" })
   .inputValidator((d: { pipelineId?: string }) => d ?? {})
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
     let pipelineId = data.pipelineId;
     if (!pipelineId) {
       const { data: p } = await supabase
@@ -140,6 +157,7 @@ export const moveCard = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
     await assertCardOwnership(supabase, userId, data.cardId);
     const { error } = await supabase
       .from("crm_lead_cards")
@@ -154,6 +172,7 @@ export const listLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
     const { data: funnels } = await supabase.from("funnels").select("id, name").eq("owner_id", userId);
     const funnelIds = (funnels ?? []).map((f: any) => f.id);
     if (!funnelIds.length) return { leads: [] };
@@ -180,6 +199,7 @@ export const getCardDetail = createServerFn({ method: "GET" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
     const { data: card } = await supabase
       .from("crm_lead_cards")
       .select("id, stage_id, position, status, assignee_id, lead_id, leads!inner(id, name, email, phone, created_at, answers, utm, funnel_id)")
@@ -203,6 +223,7 @@ export const addNote = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
     await assertCardOwnership(supabase, userId, data.cardId);
     const { error } = await supabase
       .from("crm_notes")
