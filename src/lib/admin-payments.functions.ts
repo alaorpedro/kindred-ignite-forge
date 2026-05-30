@@ -56,6 +56,9 @@ function isoFromUnix(s: number | null | undefined): string | null {
   return s ? new Date(s * 1000).toISOString() : null;
 }
 
+const ADMIN_PAYMENTS_LIMIT = 200;
+const ISSUE_STATUSES = new Set(["past_due", "unpaid", "incomplete", "incomplete_expired"]);
+
 export const listAdminPayments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ payments: PaymentRow[] }> => {
@@ -63,8 +66,9 @@ export const listAdminPayments = createServerFn({ method: "GET" })
 
     const { data: subs, error } = await supabaseAdmin
       .from("subscriptions")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("id, user_id, status, price_id, environment, current_period_start, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id, customer_email, created_at")
+      .order("created_at", { ascending: false })
+      .limit(ADMIN_PAYMENTS_LIMIT);
     if (error) throw new Error(error.message);
     if (!subs?.length) return { payments: [] };
 
@@ -79,15 +83,21 @@ export const listAdminPayments = createServerFn({ method: "GET" })
       for (const p of profs ?? []) profileById.set(p.id, { name: p.name, clinic_name: p.clinic_name });
     }
 
-    // email lookup via auth admin
+    // email lookup ONLY for the user ids on this page (parallel, bounded).
     const emailById = new Map<string, string | null>();
-    let page = 1;
-    while (true) {
-      const { data, error: aerr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-      if (aerr) throw new Error(aerr.message);
-      for (const u of data.users) emailById.set(u.id, u.email ?? null);
-      if (data.users.length < 1000) break;
-      page += 1;
+    const CHUNK = 20;
+    for (let i = 0; i < userIds.length; i += CHUNK) {
+      const slice = userIds.slice(i, i + CHUNK);
+      await Promise.all(
+        slice.map(async (id) => {
+          try {
+            const { data } = await supabaseAdmin.auth.admin.getUserById(id);
+            emailById.set(id, data?.user?.email ?? null);
+          } catch {
+            // skip missing users
+          }
+        }),
+      );
     }
 
     // group subs by environment so we hit each Stripe client only when needed
@@ -107,33 +117,45 @@ export const listAdminPayments = createServerFn({ method: "GET" })
       } catch {
         stripe = null;
       }
-      for (const s of list) {
-        let latest: PaymentRow["latest_invoice"] = null;
-        if (stripe) {
-          try {
-            const invoices = await stripe.invoices.list({
-              subscription: s.stripe_subscription_id,
-              limit: 1,
-            });
-            const inv = invoices.data[0];
-            if (inv) {
-              latest = {
-                id: inv.id ?? "",
-                status: inv.status ?? null,
-                amount_due: toMajor(inv.amount_due, inv.currency),
-                amount_paid: toMajor(inv.amount_paid, inv.currency),
-                currency: inv.currency,
-                created: isoFromUnix(inv.created),
-                hosted_invoice_url: inv.hosted_invoice_url ?? null,
-                pdf_url: inv.invoice_pdf ?? null,
-                attempt_count: inv.attempt_count ?? 0,
-                next_payment_attempt: isoFromUnix(inv.next_payment_attempt),
-              };
-            }
-          } catch (e) {
-            console.error("Failed to fetch invoice for", s.stripe_subscription_id, e);
-          }
+      // Only fetch invoices for subs that need them (issues + actions surface them).
+      // Skips ~80% of Stripe calls on healthy accounts and avoids rate-limit hits.
+      const needsInvoice = list.filter((s) => ISSUE_STATUSES.has(s.status));
+      const invoiceBySubId = new Map<string, PaymentRow["latest_invoice"]>();
+      if (stripe) {
+        const CHUNK_STRIPE = 5;
+        for (let i = 0; i < needsInvoice.length; i += CHUNK_STRIPE) {
+          const slice = needsInvoice.slice(i, i + CHUNK_STRIPE);
+          await Promise.all(
+            slice.map(async (s) => {
+              try {
+                const invoices = await stripe!.invoices.list({
+                  subscription: s.stripe_subscription_id,
+                  limit: 1,
+                });
+                const inv = invoices.data[0];
+                if (inv) {
+                  invoiceBySubId.set(s.stripe_subscription_id, {
+                    id: inv.id ?? "",
+                    status: inv.status ?? null,
+                    amount_due: toMajor(inv.amount_due, inv.currency),
+                    amount_paid: toMajor(inv.amount_paid, inv.currency),
+                    currency: inv.currency,
+                    created: isoFromUnix(inv.created),
+                    hosted_invoice_url: inv.hosted_invoice_url ?? null,
+                    pdf_url: inv.invoice_pdf ?? null,
+                    attempt_count: inv.attempt_count ?? 0,
+                    next_payment_attempt: isoFromUnix(inv.next_payment_attempt),
+                  });
+                }
+              } catch (e) {
+                console.error("Failed to fetch invoice for", s.stripe_subscription_id, e);
+              }
+            }),
+          );
         }
+      }
+      for (const s of list) {
+        const latest = invoiceBySubId.get(s.stripe_subscription_id) ?? null;
         const prof = s.user_id ? profileById.get(s.user_id) : undefined;
         payments.push({
           subscription_id: s.id,

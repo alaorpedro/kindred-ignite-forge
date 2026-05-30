@@ -41,42 +41,53 @@ export type AdminCustomerRow = {
   } | null;
 };
 
+const ADMIN_CUSTOMERS_LIMIT = 200;
+
 export const listAdminCustomers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ customers: AdminCustomerRow[] }> => {
     await ensureAdmin(context.userId);
 
-    // 1. All profiles
+    // 1. Most recent N profiles (bounded to avoid loading the whole table).
     const { data: profiles, error: profErr } = await supabaseAdmin
       .from("profiles")
       .select("id, name, clinic_name, instagram_url, plan, created_at")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(ADMIN_CUSTOMERS_LIMIT);
     if (profErr) throw new Error(profErr.message);
 
-    // 2. All auth users (for email + last sign in)
+    const profileIds = (profiles ?? []).map((p) => p.id);
+
+    // 2. Auth metadata for ONLY the profiles we need (parallel, bounded concurrency).
     const authUsers = new Map<
       string,
       { email: string | null; last_sign_in_at: string | null; phone: string | null }
     >();
-    let page = 1;
-    while (true) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-      if (error) throw new Error(error.message);
-      for (const u of data.users) {
-        authUsers.set(u.id, {
-          email: u.email ?? null,
-          last_sign_in_at: u.last_sign_in_at ?? null,
-          phone: (u.phone as string | undefined) ?? null,
-        });
-      }
-      if (data.users.length < 1000) break;
-      page += 1;
+    const CHUNK = 20;
+    for (let i = 0; i < profileIds.length; i += CHUNK) {
+      const slice = profileIds.slice(i, i + CHUNK);
+      await Promise.all(
+        slice.map(async (id) => {
+          try {
+            const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
+            if (error || !data?.user) return;
+            authUsers.set(id, {
+              email: data.user.email ?? null,
+              last_sign_in_at: data.user.last_sign_in_at ?? null,
+              phone: (data.user.phone as string | undefined) ?? null,
+            });
+          } catch {
+            // ignore per-user lookup failures, profile still renders
+          }
+        }),
+      );
     }
 
-    // 3. Subscriptions
+    // 3. Subscriptions for the visible profiles only.
     const { data: subs, error: subErr } = await supabaseAdmin
       .from("subscriptions")
-      .select("*")
+      .select("id, user_id, status, price_id, product_id, environment, current_period_start, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id, customer_email, created_at")
+      .in("user_id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"])
       .order("created_at", { ascending: false });
     if (subErr) throw new Error(subErr.message);
     const subByUser = new Map<string, NonNullable<AdminCustomerRow["subscription"]>>();
@@ -100,10 +111,11 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
       }
     }
 
-    // 4. Funnels (count per owner)
+    // 4. Funnels (only for visible owners)
     const { data: funnels, error: funErr } = await supabaseAdmin
       .from("funnels")
-      .select("id, owner_id");
+      .select("id, owner_id")
+      .in("owner_id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"]);
     if (funErr) throw new Error(funErr.message);
     const funnelsCount = new Map<string, number>();
     const funnelIdsByOwner = new Map<string, string[]>();
@@ -114,14 +126,18 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
       funnelIdsByOwner.set(f.owner_id, arr);
     }
 
-    // 5. Leads (count per funnel → aggregate per owner)
-    const { data: leads, error: leadErr } = await supabaseAdmin
-      .from("leads")
-      .select("funnel_id");
-    if (leadErr) throw new Error(leadErr.message);
+    // 5. Leads (only for funnels of visible owners)
+    const allFunnelIds = Array.from(new Set(Array.from(funnelIdsByOwner.values()).flat()));
     const leadsByFunnel = new Map<string, number>();
-    for (const l of leads ?? []) {
-      leadsByFunnel.set(l.funnel_id, (leadsByFunnel.get(l.funnel_id) ?? 0) + 1);
+    if (allFunnelIds.length) {
+      const { data: leads, error: leadErr } = await supabaseAdmin
+        .from("leads")
+        .select("funnel_id")
+        .in("funnel_id", allFunnelIds);
+      if (leadErr) throw new Error(leadErr.message);
+      for (const l of leads ?? []) {
+        leadsByFunnel.set(l.funnel_id, (leadsByFunnel.get(l.funnel_id) ?? 0) + 1);
+      }
     }
     const leadsByOwner = new Map<string, number>();
     for (const [ownerId, ids] of funnelIdsByOwner.entries()) {
