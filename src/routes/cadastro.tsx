@@ -46,13 +46,16 @@ function CadastroPage() {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [weakPasswordOpen, setWeakPasswordOpen] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
+    const emailValue = String(fd.get("email"));
     const { error } = await supabase.auth.signUp({
-      email: String(fd.get("email")),
+      email: emailValue,
       password: String(fd.get("password")),
       options: {
         emailRedirectTo: window.location.origin + (next || "/app"),
@@ -77,7 +80,19 @@ function CadastroPage() {
       return;
     }
     toast.success("Cadastro realizado! Verifique seu email para confirmar.");
-    navigate({ to: "/login", search: next ? ({ next } as never) : undefined });
+    setPendingEmail(emailValue);
+  }
+
+  async function resendConfirmation() {
+    if (!pendingEmail) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: pendingEmail });
+      if (error) toast.error("Não foi possível reenviar agora. Tente em alguns instantes.");
+      else toast.success("Email de confirmação reenviado.");
+    } finally {
+      setResending(false);
+    }
   }
 
   async function google() {
@@ -91,7 +106,23 @@ function CadastroPage() {
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
         <h1 className="text-4xl font-black tracking-tight">Criar conta</h1>
-        
+        {pendingEmail ? (
+          <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5 text-sm">
+            <h2 className="font-bold text-base">Confirme seu email</h2>
+            <p className="mt-1 text-muted-foreground">
+              Enviamos um link de confirmação para <span className="font-semibold text-foreground">{pendingEmail}</span>. Clique no link para ativar sua conta.
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Button type="button" variant="outline" className="rounded-full" onClick={resendConfirmation} disabled={resending}>
+                {resending ? "Reenviando..." : "Reenviar email"}
+              </Button>
+              <Button type="button" className="rounded-full" onClick={() => navigate({ to: "/login", search: next ? ({ next } as never) : undefined })}>
+                Ir para login
+              </Button>
+            </div>
+          </div>
+        ) : (
+        <>
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Cadastrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -107,6 +138,8 @@ function CadastroPage() {
         <p className="mt-6 text-sm text-center text-muted-foreground">
           Já tem conta? <Link to="/login" className="text-primary font-medium">Entrar</Link>
         </p>
+        </>
+        )}
       </main>
       <AlertDialog open={weakPasswordOpen} onOpenChange={setWeakPasswordOpen}>
         <AlertDialogContent>
