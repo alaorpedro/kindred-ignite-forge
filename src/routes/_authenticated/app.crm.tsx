@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useRouterState, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, LayoutGrid, ListChecks, BarChart3, Settings as SettingsIcon } from "lucide-react";
@@ -10,6 +10,8 @@ export const Route = createFileRoute("/_authenticated/app/crm")({
 
 function CrmLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+
   const checkAccess = useServerFn(hasCrmAccess);
   const { data, isLoading } = useQuery({
     queryKey: ["crm", "access"],
@@ -52,17 +54,19 @@ function CrmLayout() {
           {links.map((l) => {
             const active = path.startsWith(l.to);
             return (
-              <Link
+              <button
                 key={l.to}
-                to={l.to}
+                onClick={() => navigate({ to: l.to as any })}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-95 ${
                   active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70 hover:bg-secondary"
                 }`}
               >
 
+
                 <l.icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
                 {l.label}
-              </Link>
+              </button>
+
             );
           })}
         </nav>
