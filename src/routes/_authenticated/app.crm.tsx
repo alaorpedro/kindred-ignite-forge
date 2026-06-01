@@ -56,11 +56,16 @@ function CrmLayout() {
             return (
               <button
                 key={l.to}
-                onClick={() => navigate({ to: l.to as any })}
+                type="button"
+                onClick={() => {
+                  console.log("Navigating to:", l.to);
+                  navigate({ to: l.to });
+                }}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-95 ${
                   active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70 hover:bg-secondary"
                 }`}
               >
+
 
 
                 <l.icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
