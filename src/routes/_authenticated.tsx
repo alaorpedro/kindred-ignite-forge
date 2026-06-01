@@ -83,7 +83,7 @@ function AppLayout() {
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[999]">
         <Link 
           to="/app"
-          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity pointer-events-auto relative z-[110]" 
+          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity pointer-events-auto relative z-[1000]" 
           aria-label="Clinik.Club"
         >
           <img src={icon} alt="" className="h-8 w-8" />
@@ -112,7 +112,7 @@ function AppLayout() {
         <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-[999]">
           <Link 
             to="/app"
-            className="flex items-center gap-2" 
+            className="flex items-center gap-2 pointer-events-auto relative z-[1000]" 
             aria-label="Clinik.Club"
           >
             <img src={icon} alt="" className="h-7 w-7" />
@@ -125,14 +125,14 @@ function AppLayout() {
                 <Link
                   key={l.to}
                   to={l.to as any}
-                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition pointer-events-auto relative z-[1000] ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
                   aria-label={l.label}
                 >
                   <l.icon className="h-4 w-4" />
                 </Link>
               );
             })}
-            <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9"><LogOut className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9 pointer-events-auto relative z-[1000]"><LogOut className="h-4 w-4" /></Button>
           </nav>
         </header>
         <main className="flex-1 p-6 md:p-10 overflow-y-auto"><Outlet /></main>
