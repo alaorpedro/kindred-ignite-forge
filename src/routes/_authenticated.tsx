@@ -2,10 +2,11 @@ import { createFileRoute, Outlet, redirect, useNavigate, useRouterState, Link } 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, User, LogOut, Loader2, Users, ShieldCheck, Tag } from "lucide-react";
+import { LayoutGrid, User, LogOut, Loader2, Users, ShieldCheck, Tag, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
+
 
 async function getCurrentUserWithFallback() {
   if (typeof window === "undefined") return null;
