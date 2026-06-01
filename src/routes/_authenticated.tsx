@@ -79,7 +79,7 @@ function AppLayout() {
   return (
     <div className="h-screen flex bg-secondary/30 overflow-hidden relative">
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen relative z-[40]">
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen relative z-[50]">
         <Link 
           to="/app"
           className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
@@ -95,7 +95,7 @@ function AppLayout() {
               <Link
                 key={l.to}
                 to={l.to as any}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
               >
                 <l.icon className="h-4 w-4" />{l.label}
               </Link>
@@ -104,11 +104,12 @@ function AppLayout() {
         </nav>
         <div className="border-t border-border pt-4">
           <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
-          <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2"><LogOut className="h-4 w-4" />Sair</Button>
+          <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2 cursor-pointer hover:bg-destructive/10 hover:text-destructive"><LogOut className="h-4 w-4" />Sair</Button>
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-0">
+
         {/* Header Mobile */}
         <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 z-[50]">
           <Link 
