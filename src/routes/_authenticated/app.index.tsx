@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown, Trash2 } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown, Trash2, Users, MousePointer2, BarChart3, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -176,6 +177,75 @@ function AppHome() {
           </div>
         );
       })()}
+      {usage && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card className="rounded-2xl border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Leads no Mês</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black">{usage.leadsUsedThisMonth.toLocaleString("pt-BR")}</div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                de {usage.maxLeadsPerMonth.toLocaleString("pt-BR")} contratados
+              </p>
+              <div className="mt-3 h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${usage.leadsUsedThisMonth / usage.maxLeadsPerMonth > 0.9 ? "bg-destructive" : "bg-primary"}`}
+                  style={{ width: `${Math.min(100, (usage.leadsUsedThisMonth / usage.maxLeadsPerMonth) * 100)}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Funis Ativos</CardTitle>
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black">{usage.funnelsUsed}</div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {usage.maxFunnels ? `limite de ${usage.maxFunnels} funis` : "funis ilimitados"}
+              </p>
+              <div className="mt-3 h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-500"
+                  style={{ width: `${usage.maxFunnels ? Math.min(100, (usage.funnelsUsed / usage.maxFunnels) * 100) : 100}%` }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Taxa de Conversão</CardTitle>
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black">--</div>
+              <p className="text-[10px] text-muted-foreground mt-1">média de todos os funis</p>
+              <div className="mt-3 flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-secondary/50 rounded-lg px-2 py-1 w-fit">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Em breve
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cliques Totais</CardTitle>
+              <MousePointer2 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-black">--</div>
+              <p className="text-[10px] text-muted-foreground mt-1">visitas nos seus links</p>
+              <div className="mt-3 flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-secondary/50 rounded-lg px-2 py-1 w-fit">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Em breve
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>
