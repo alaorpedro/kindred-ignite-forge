@@ -10,23 +10,28 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to={user ? "/app" : "/"} className="flex items-center gap-2" aria-label="Clinik.Club">
+        <Button 
+          variant="ghost" 
+          className="flex items-center gap-2 p-0 h-auto hover:bg-transparent" 
+          onClick={() => navigate({ to: user ? "/app" : "/" })}
+          aria-label="Clinik.Club"
+        >
           <img src={icon} alt="" className="h-8 w-8" />
           <img src={logo} alt="Clinik.Club" className="h-7 w-auto hidden sm:block" />
-        </Link>
+        </Button>
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-          <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: "text-primary" }} className="text-foreground/70 hover:text-foreground transition">Home</Link>
-          <Link to="/sobre" activeProps={{ className: "text-primary" }} className="text-foreground/70 hover:text-foreground transition">Sobre</Link>
-          <Link to="/planos" activeProps={{ className: "text-primary" }} className="text-foreground/70 hover:text-foreground transition">Planos</Link>
-          <Link to="/contato" activeProps={{ className: "text-primary" }} className="text-foreground/70 hover:text-foreground transition">Contato</Link>
+          <Button variant="ghost" className="text-foreground/70 hover:text-foreground h-auto p-0" onClick={() => navigate({ to: "/" })}>Home</Button>
+          <Button variant="ghost" className="text-foreground/70 hover:text-foreground h-auto p-0" onClick={() => navigate({ to: "/sobre" })}>Sobre</Button>
+          <Button variant="ghost" className="text-foreground/70 hover:text-foreground h-auto p-0" onClick={() => navigate({ to: "/planos" })}>Planos</Button>
+          <Button variant="ghost" className="text-foreground/70 hover:text-foreground h-auto p-0" onClick={() => navigate({ to: "/contato" })}>Contato</Button>
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
-            <Button asChild size="sm"><Link to="/app">Ir para o app</Link></Button>
+            <Button onClick={() => navigate({ to: "/app" })} size="sm">Ir para o app</Button>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><Link to="/login">Entrar</Link></Button>
-              <Button asChild size="sm" className="rounded-full font-semibold"><Link to="/cadastro">Inscrever-se</Link></Button>
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigate({ to: "/login" })}>Entrar</Button>
+              <Button size="sm" className="rounded-full font-semibold" onClick={() => navigate({ to: "/cadastro" })}>Inscrever-se</Button>
             </>
           )}
         </div>
