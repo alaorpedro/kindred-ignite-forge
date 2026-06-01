@@ -89,14 +89,13 @@ function AppLayout() {
           {links.map((l) => {
             const active = l.to === "/app" ? (path === "/app" || path === "/app/") : path.startsWith(l.to);
             return (
-              <Button
+              <Link
                 key={l.to}
-                variant="ghost"
-                className={`w-full justify-start gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
-                onClick={() => navigate({ to: l.to })}
+                to={l.to as any}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
               >
                 <l.icon className="h-4 w-4" />{l.label}
-              </Button>
+              </Link>
             );
           })}
         </nav>
@@ -115,16 +114,14 @@ function AppLayout() {
             {links.map((l) => {
               const active = l.to === "/app" ? (path === "/app" || path === "/app/") : path.startsWith(l.to);
               return (
-                <Button
+                <Link
                   key={l.to}
-                  variant="ghost"
-                  size="icon"
-                  className={`h-9 w-9 rounded-lg transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
-                  onClick={() => navigate({ to: l.to })}
+                  to={l.to as any}
+                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
                   aria-label={l.label}
                 >
                   <l.icon className="h-4 w-4" />
-                </Button>
+                </Link>
               );
             })}
             <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9"><LogOut className="h-4 w-4" /></Button>
