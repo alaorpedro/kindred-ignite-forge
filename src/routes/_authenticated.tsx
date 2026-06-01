@@ -83,7 +83,7 @@ function AppLayout() {
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
         <button 
           onClick={() => navigate({ to: "/app" })}
-          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
+          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer" 
           aria-label="Clinik.Club"
         >
           <img src={icon} alt="" className="h-8 w-8" />
@@ -96,7 +96,7 @@ function AppLayout() {
               <button
                 key={l.to}
                 onClick={() => navigate({ to: l.to as any })}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition bg-transparent border-none cursor-pointer ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
               >
                 <l.icon className="h-4 w-4" />{l.label}
               </button>
@@ -112,7 +112,7 @@ function AppLayout() {
         <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-30">
           <button 
             onClick={() => navigate({ to: "/app" })}
-            className="flex items-center gap-2" 
+            className="flex items-center gap-2 bg-transparent border-none p-0 cursor-pointer" 
             aria-label="Clinik.Club"
           >
             <img src={icon} alt="" className="h-7 w-7" />
@@ -125,7 +125,7 @@ function AppLayout() {
                 <button
                   key={l.to}
                   onClick={() => navigate({ to: l.to as any })}
-                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition bg-transparent border-none cursor-pointer ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
                   aria-label={l.label}
                 >
                   <l.icon className="h-4 w-4" />
