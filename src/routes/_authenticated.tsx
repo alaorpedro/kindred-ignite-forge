@@ -8,11 +8,12 @@ import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
 
 async function getCurrentUserWithFallback() {
+  if (typeof window === "undefined") return null;
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) return session.user;
-  } catch {
-    // Fall back to direct user check
+  } catch (err) {
+    console.error("Auth check failed:", err);
   }
   const { data: { user } } = await supabase.auth.getUser();
   return user ?? null;
@@ -21,10 +22,16 @@ async function getCurrentUserWithFallback() {
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     const user = await getCurrentUserWithFallback();
-    if (!user) throw redirect({ to: "/login", search: { next: location.pathname } as never });
+    if (!user) {
+      throw redirect({ 
+        to: "/login", 
+        search: { next: location.pathname } as any
+      });
+    }
   },
   component: AppLayout,
 });
+
 
 
 function AppLayout() {
