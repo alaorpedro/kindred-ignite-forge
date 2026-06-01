@@ -80,7 +80,7 @@ function AppLayout() {
 
   return (
     <div className="h-screen flex bg-secondary/30 overflow-hidden">
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-40">
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[100]">
         <Link 
           to="/app"
           className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
@@ -109,7 +109,7 @@ function AppLayout() {
         </div>
       </aside>
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-40">
+        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-[100]">
           <Link 
             to="/app"
             className="flex items-center gap-2" 
