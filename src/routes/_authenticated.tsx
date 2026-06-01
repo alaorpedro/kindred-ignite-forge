@@ -120,19 +120,22 @@ function AppLayout() {
 
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 py-3 sticky top-0 z-[60]">
-        <Link 
-          to="/app"
+        <button 
+          onClick={() => {
+            setMobileMenuOpen(false);
+            navigate({ to: "/app/index" as any });
+          }}
           className="flex items-center gap-2" 
           aria-label="Clinik.Club"
-          onClick={() => setMobileMenuOpen(false)}
         >
           <img src={icon} alt="" className="h-7 w-7" />
           <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
-        </Link>
+        </button>
         <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="h-9 w-9">
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </header>
+
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
