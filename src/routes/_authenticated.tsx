@@ -73,7 +73,8 @@ function AppLayout() {
   return (
     <div className="min-h-screen flex bg-secondary/30 relative isolate">
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen fixed inset-y-0 left-0 z-[50]">
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[50]">
+
         <Link 
           to="/app"
           className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
