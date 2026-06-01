@@ -81,10 +81,9 @@ function AppLayout() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-secondary/30 relative isolate">
+    <div className="min-h-screen flex flex-col md:flex-row bg-secondary/30 relative isolate">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[50]">
-
         <Link 
           to="/app"
           className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
@@ -113,41 +112,54 @@ function AppLayout() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col relative z-0">
-        {/* Header Mobile */}
-        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-[60]">
-          <Link 
-            to="/app"
-            className="flex items-center gap-2" 
-            aria-label="Clinik.Club"
-          >
-            <img src={icon} alt="" className="h-7 w-7" />
-            <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
-          </Link>
-          <nav className="flex items-center gap-1">
+      {/* Header Mobile */}
+      <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 py-3 sticky top-0 z-[60]">
+        <Link 
+          to="/app"
+          className="flex items-center gap-2" 
+          aria-label="Clinik.Club"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <img src={icon} alt="" className="h-7 w-7" />
+          <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
+        </Link>
+        <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="h-9 w-9">
+          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 top-[53px] bg-background z-[55] flex flex-col p-6 animate-in slide-in-from-top duration-300">
+          <nav className="flex-1 space-y-2">
             {links.map((l) => {
               const active = l.to === "/app" ? (path === "/app" || path === "/app/") : path.startsWith(l.to);
               return (
                 <Link
                   key={l.to}
                   to={l.to as any}
-                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
-                  aria-label={l.label}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold transition ${active ? "bg-primary text-primary-foreground" : "text-foreground/70 bg-secondary/50"}`}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  <l.icon className="h-4 w-4" />
+                  <l.icon className="h-5 w-5" />{l.label}
                 </Link>
               );
             })}
-            <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9"><LogOut className="h-4 w-4" /></Button>
           </nav>
-        </header>
+          <div className="border-t border-border pt-6 mt-auto">
+            <div className="px-4 py-2 text-xs font-medium text-muted-foreground truncate uppercase tracking-wider mb-2">{user.email}</div>
+            <Button variant="outline" size="lg" onClick={logout} className="w-full justify-center gap-2 rounded-xl font-bold border-destructive/20 text-destructive"><LogOut className="h-5 w-5" />Sair</Button>
+          </div>
+        </div>
+      )}
 
+      <div className="flex-1 flex flex-col relative z-0">
         {/* Main Content */}
         <main className="flex-1 p-6 md:p-10 z-0">
           <Outlet />
         </main>
       </div>
-
     </div>
+
   );
 }
