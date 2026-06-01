@@ -77,7 +77,7 @@ function AppLayout() {
   ];
 
   return (
-    <div className="h-screen flex bg-secondary/30 overflow-hidden relative">
+    <div className="h-screen flex bg-secondary/30 overflow-hidden relative isolate">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen relative z-[50]">
         <Link 
