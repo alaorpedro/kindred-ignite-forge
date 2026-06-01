@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/clinik-club-logo.png";
@@ -7,6 +7,7 @@ import icon from "@/assets/clinik-icon.png";
 
 export function SiteHeader() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
