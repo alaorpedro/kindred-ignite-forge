@@ -111,7 +111,8 @@ function AppLayout() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-0">
 
         {/* Header Mobile */}
-        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 z-[50]">
+        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 z-[60]">
+
           <Link 
             to="/app"
             className="flex items-center gap-2" 
