@@ -9,29 +9,23 @@ import icon from "@/assets/clinik-icon.png";
 
 async function getCurrentUserWithFallback() {
   try {
-    const result = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 2500)),
-    ]);
-    if (result?.data.user) return result.data.user;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session.user;
   } catch {
-    // Fall back to the local session
+    // Fall back to direct user check
   }
-  const sessionResult = await Promise.race([
-    supabase.auth.getSession(),
-    new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1000)),
-  ]);
-  return sessionResult?.data.session?.user ?? null;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user ?? null;
 }
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
-    if (typeof window === "undefined") return;
     const user = await getCurrentUserWithFallback();
     if (!user) throw redirect({ to: "/login", search: { next: location.pathname } as never });
   },
   component: AppLayout,
 });
+
 
 function AppLayout() {
   const { user, loading } = useAuth();
