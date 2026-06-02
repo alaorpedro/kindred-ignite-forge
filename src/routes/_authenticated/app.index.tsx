@@ -246,24 +246,26 @@ function AppHome() {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>
-          <p className="text-muted-foreground mt-1">Crie e gerencie seus funis interativos.</p>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Meus funis</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">Crie e gerencie seus funis interativos.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           {hasPlan && planName && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-xs font-bold border border-primary/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-[10px] md:text-xs font-bold border border-primary/20">
               <Crown className="h-3.5 w-3.5" />
               Plano {planName}
             </span>
           )}
           {hasPlan === false ? (
-            <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold">
+            <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold text-xs md:text-sm h-9 md:h-10 px-4 md:px-5">
               <Lock className="h-4 w-4 mr-1" />Ativar plano
             </Button>
           ) : (
-            <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
+            <Button onClick={createFunnel} className="rounded-full font-semibold text-xs md:text-sm h-9 md:h-10 px-4 md:px-5">
+              <Plus className="h-4 w-4 mr-1" />Novo funil
+            </Button>
           )}
         </div>
       </div>

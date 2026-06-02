@@ -110,21 +110,24 @@ function PipelinesPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Pipeline</h1>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">Pipeline</h1>
           <p className="text-muted-foreground mt-1 text-sm">Arraste os cards entre as etapas para atualizar o status.</p>
         </div>
-        <Button variant="outline" size="sm" disabled className="rounded-full">
+        <Button variant="outline" size="sm" disabled className="rounded-full self-start sm:self-auto">
           <Plus className="h-4 w-4" /> Novo pipeline
         </Button>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {(data?.stages ?? []).map((stage: Stage) => (
-            <StageColumn key={stage.id} stage={stage} cards={byStage.get(stage.id) ?? []} />
-          ))}
+        <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
+          <div className="flex gap-4 min-w-full">
+            {(data?.stages ?? []).map((stage: Stage) => (
+              <StageColumn key={stage.id} stage={stage} cards={byStage.get(stage.id) ?? []} />
+            ))}
+            <div className="w-1 shrink-0" /> {/* Extra space at the end of scroll */}
+          </div>
         </div>
       </DndContext>
     </div>
