@@ -119,7 +119,7 @@ function AppLayout() {
 
 
       {/* Header Mobile */}
-      <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 py-3 sticky top-0 z-[60]">
+      <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 h-14 sticky top-0 z-[60]">
         <Link 
           to="/app"
           onClick={() => setMobileMenuOpen(false)}
@@ -137,7 +137,7 @@ function AppLayout() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[53px] bg-background z-[55] flex flex-col p-6 animate-in slide-in-from-top duration-300">
+        <div className="md:hidden fixed inset-0 top-14 bg-background z-[55] flex flex-col p-6 animate-in slide-in-from-top duration-300">
           <nav className="flex-1 space-y-2">
             {links.map((l) => {
               const active = path === l.to || (l.to !== "/app" && path.startsWith(l.to));
@@ -161,9 +161,9 @@ function AppLayout() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col relative z-0">
+      <div className="flex-1 flex flex-col relative z-0 w-full overflow-x-hidden">
         {/* Main Content */}
-        <main className="flex-1 p-6 md:p-10 z-0">
+        <main className="flex-1 p-4 sm:p-6 md:p-10 z-0">
           <Outlet />
         </main>
       </div>

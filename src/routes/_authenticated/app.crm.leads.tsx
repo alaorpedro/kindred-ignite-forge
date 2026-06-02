@@ -53,8 +53,8 @@ function LeadsPage() {
           Nenhum lead encontrado.
         </div>
       ) : (
-        <div className="rounded-2xl border border-border bg-background overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-2xl border border-border bg-background overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px] md:min-w-0">
             <thead className="bg-secondary/60 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <tr>
                 <th className="text-left px-4 py-3">Lead</th>
