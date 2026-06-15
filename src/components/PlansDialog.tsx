@@ -64,7 +64,7 @@ export function PlansDialog({ open, onOpenChange }: PlansDialogProps) {
   function handleSubscribe(priceId: string) {
     if (!user) {
       onOpenChange(false);
-      navigate({ to: "/cadastro" });
+      navigate({ to: "/cadastro", search: { plan: priceId, next: `/planos?checkout=${priceId}` } as never });
       return;
     }
     setCheckoutPriceId(priceId);

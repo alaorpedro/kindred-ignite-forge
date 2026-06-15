@@ -36,13 +36,23 @@ export const Route = createFileRoute("/cadastro")({
   validateSearch: (s: Record<string, unknown>) => ({
     email: typeof s.email === "string" ? s.email : undefined,
     next: typeof s.next === "string" ? s.next : undefined,
+    plan: typeof s.plan === "string" && /^(starter|pro|agency)_(monthly|yearly)$/.test(s.plan) ? s.plan : undefined,
   }),
   component: CadastroPage,
 });
 
+function safeNextPath(next: string | undefined): string {
+  if (!next || typeof next !== "string") return "/app";
+  if (!next.startsWith("/")) return "/app";
+  if (next.startsWith("//") || next.startsWith("/\\")) return "/app";
+  if (/[\x00-\x1f]/.test(next)) return "/app";
+  return next;
+}
+
 function CadastroPage() {
   const navigate = useNavigate();
-  const { email: prefEmail, next } = Route.useSearch();
+  const { email: prefEmail, next, plan } = Route.useSearch();
+  const nextPath = plan ? `/planos?checkout=${encodeURIComponent(plan)}` : safeNextPath(next);
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [weakPasswordOpen, setWeakPasswordOpen] = useState(false);
@@ -54,11 +64,11 @@ function CadastroPage() {
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     const emailValue = String(fd.get("email"));
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: emailValue,
       password: String(fd.get("password")),
       options: {
-        emailRedirectTo: window.location.origin + (next || "/app"),
+        emailRedirectTo: window.location.origin + nextPath,
         data: { name: String(fd.get("name")) },
       },
     });
@@ -79,6 +89,11 @@ function CadastroPage() {
       }
       return;
     }
+    if (data.session) {
+      toast.success(plan ? "Conta criada! Vamos finalizar sua assinatura." : "Cadastro realizado!");
+      window.location.assign(nextPath);
+      return;
+    }
     toast.success("Cadastro realizado! Verifique seu email para confirmar.");
     setPendingEmail(emailValue);
   }
@@ -96,9 +111,9 @@ function CadastroPage() {
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + (next || "/app") });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + nextPath });
     if (result.error) toast.error("Erro ao cadastrar com Google");
-    if (!result.redirected && !result.error) navigate({ to: (next as never) || "/app" });
+    if (!result.redirected && !result.error) window.location.assign(nextPath);
   }
 
   return (
@@ -116,7 +131,7 @@ function CadastroPage() {
               <Button type="button" variant="outline" className="rounded-full" onClick={resendConfirmation} disabled={resending}>
                 {resending ? "Reenviando..." : "Reenviar email"}
               </Button>
-              <Button type="button" className="rounded-full" onClick={() => navigate({ to: "/login", search: next ? ({ next } as never) : undefined })}>
+              <Button type="button" className="rounded-full" onClick={() => navigate({ to: "/login", search: { next: nextPath } as never })}>
                 Ir para login
               </Button>
             </div>

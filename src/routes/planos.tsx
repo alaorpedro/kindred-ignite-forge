@@ -25,6 +25,9 @@ export const Route = createFileRoute("/planos")({
       { rel: "canonical", href: "https://clinik.club/planos" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    checkout: typeof s.checkout === "string" && /^(starter|pro|agency)_(monthly|yearly)$/.test(s.checkout) ? s.checkout : undefined,
+  }),
   component: PlanosPage,
 });
 
@@ -58,19 +61,22 @@ const plans = [
 
 function PlanosPage() {
   const navigate = useNavigate();
+  const { checkout } = Route.useSearch();
   const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("monthly");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUser({ id: data.user.id, email: data.user.email ?? null });
+      if (!data.user) return;
+      setUser({ id: data.user.id, email: data.user.email ?? null });
+      if (checkout) setCheckoutPriceId(checkout);
     });
-  }, []);
+  }, [checkout]);
 
   function handleSubscribe(priceId: string) {
     if (!user) {
-      navigate({ to: "/cadastro" });
+      navigate({ to: "/cadastro", search: { plan: priceId, next: `/planos?checkout=${priceId}` } as never });
       return;
     }
     setCheckoutPriceId(priceId);
