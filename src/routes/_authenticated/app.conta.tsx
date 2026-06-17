@@ -7,6 +7,17 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { deleteOwnAccount } from "@/lib/account.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/app/conta")({
   component: ContaPage,
@@ -17,6 +28,8 @@ function ContaPage() {
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +71,24 @@ function ContaPage() {
     }
   }
 
+  async function deleteAccount() {
+    setDeleting(true);
+    try {
+      const result = await deleteOwnAccount();
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      await supabase.auth.signOut();
+      window.location.assign("/");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir conta");
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  }
+
   const hasPaidPlan = profile?.plan && profile.plan !== "free";
 
   return (
@@ -86,6 +117,43 @@ function ContaPage() {
           )}
         </div>
       </div>
+      <div className="mt-8 rounded-2xl border border-destructive/30 bg-card p-6">
+        <h2 className="font-bold text-destructive">Excluir minha conta</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Esta ação cancela assinaturas ativas e remove sua conta e seus dados do sistema.
+        </p>
+        <Button
+          type="button"
+          variant="destructive"
+          className="mt-4 rounded-full font-semibold"
+          onClick={() => setDeleteOpen(true)}
+        >
+          Excluir minha conta
+        </Button>
+      </div>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir sua conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Suas assinaturas ativas serão canceladas e sua conta será removida.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                deleteAccount();
+              }}
+            >
+              {deleting ? "Excluindo..." : "Excluir conta"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
