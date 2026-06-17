@@ -91,8 +91,14 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         mode: "subscription",
         ui_mode: "embedded_page",
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
+        payment_method_types: ["card"],
         allow_promotion_codes: true,
         payment_method_collection: "always",
+        wallet_options: {
+          link: {
+            display: "never",
+          },
+        },
         ...(customerId && { customer: customerId }),
         metadata: {
           ...(verifiedUser && { userId: verifiedUser.id }),
