@@ -12,8 +12,6 @@ const ALLOWED_RETURN_HOSTS = new Set([
   "localhost",
 ]);
 
-const LAUNCH_PROMOTION_CODE = "ONMID30";
-
 function sanitizeReturnUrl(input: string | undefined): string | undefined {
   if (!input) return undefined;
   try {
@@ -64,32 +62,6 @@ async function resolveOrCreateCustomer(
   return created.id;
 }
 
-async function resolveLaunchPromotionCode(stripe: ReturnType<typeof createStripeClient>): Promise<string> {
-  const found = await stripe.promotionCodes.list({
-    code: LAUNCH_PROMOTION_CODE,
-    limit: 1,
-  });
-  if (found.data.length) {
-    const promotionCode = found.data[0];
-    if (!promotionCode.active) {
-      await stripe.promotionCodes.update(promotionCode.id, { active: true });
-    }
-    return promotionCode.id;
-  }
-
-  const coupon = await stripe.coupons.create({
-    name: `${LAUNCH_PROMOTION_CODE} - primeiro mês grátis`,
-    percent_off: 100,
-    duration: "repeating",
-    duration_in_months: 1,
-  });
-  const promotionCode = await stripe.promotionCodes.create({
-    promotion: { type: "coupon", coupon: coupon.id },
-    code: LAUNCH_PROMOTION_CODE,
-  });
-  return promotionCode.id;
-}
-
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator((data: {
     priceId: string;
@@ -113,29 +85,23 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const stripePrice = prices.data[0];
 
       const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
-      const shouldApplyLaunchPromotion = data.priceId.toLowerCase().endsWith("_monthly");
-      const launchPromotionCodeId = shouldApplyLaunchPromotion
-        ? await resolveLaunchPromotionCode(stripe)
-        : undefined;
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: "subscription",
         ui_mode: "embedded_page",
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
-        ...(launchPromotionCodeId && { discounts: [{ promotion_code: launchPromotionCodeId }] }),
+        allow_promotion_codes: true,
         payment_method_collection: "always",
         ...(customerId && { customer: customerId }),
         metadata: {
           ...(verifiedUser && { userId: verifiedUser.id }),
           ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
-          ...(launchPromotionCodeId && { promotionCode: LAUNCH_PROMOTION_CODE }),
         },
         subscription_data: {
           metadata: {
             ...(verifiedUser && { userId: verifiedUser.id }),
             ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
-            ...(launchPromotionCodeId && { promotionCode: LAUNCH_PROMOTION_CODE }),
           },
         },
       });
