@@ -29,6 +29,7 @@ import { Route as AuthenticatedAppCrmRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppCrmIndexRouteImport } from './routes/_authenticated/app.crm.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppCrmUpgradeRouteImport } from './routes/_authenticated/app.crm.upgrade'
 import { Route as AuthenticatedAppCrmRelatoriosRouteImport } from './routes/_authenticated/app.crm.relatorios'
@@ -139,6 +140,12 @@ const AuthenticatedAppCrmIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAppCrmRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -220,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/app/crm/relatorios': typeof AuthenticatedAppCrmRelatoriosRoute
   '/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/crm/': typeof AuthenticatedAppCrmIndexRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
@@ -248,6 +256,7 @@ export interface FileRoutesByTo {
   '/app/crm/relatorios': typeof AuthenticatedAppCrmRelatoriosRoute
   '/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/app/crm': typeof AuthenticatedAppCrmIndexRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
@@ -280,6 +289,7 @@ export interface FileRoutesById {
   '/_authenticated/app/crm/relatorios': typeof AuthenticatedAppCrmRelatoriosRoute
   '/_authenticated/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/app/crm/': typeof AuthenticatedAppCrmIndexRoute
   '/_authenticated/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/_authenticated/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/app/crm/relatorios'
     | '/app/crm/upgrade'
     | '/api/public/payments/webhook'
+    | '/lovable/email/queue/process'
     | '/app/crm/'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/app/crm/relatorios'
     | '/app/crm/upgrade'
     | '/api/public/payments/webhook'
+    | '/lovable/email/queue/process'
     | '/app/crm'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
@@ -371,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/crm/relatorios'
     | '/_authenticated/app/crm/upgrade'
     | '/api/public/payments/webhook'
+    | '/lovable/email/queue/process'
     | '/_authenticated/app/crm/'
     | '/_authenticated/app/funis/$id/editar'
     | '/_authenticated/app/funis/$id/leads'
@@ -391,6 +404,7 @@ export interface RootRouteChildren {
   FSlugRoute: typeof FSlugRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -534,6 +548,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/crm/'
       preLoaderRoute: typeof AuthenticatedAppCrmIndexRouteImport
       parentRoute: typeof AuthenticatedAppCrmRoute
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -685,17 +706,8 @@ const rootRouteChildren: RootRouteChildren = {
   FSlugRoute: FSlugRoute,
   SitemapXmlRoute: SitemapXmlRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
