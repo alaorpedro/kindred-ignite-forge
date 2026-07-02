@@ -87,16 +87,18 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
       const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
 
+      // Cartão é o método padrão. PIX vira opção quando o cliente clica em "cartão
+      // recusado?" — via query `allowPix=true`. Stripe só permite PIX em `mode: payment`,
+      // então quando o preço é recorrente e PIX é solicitado, cobramos a primeira
+      // parcela como pagamento único (o cliente reassina depois se quiser continuar).
       const isRecurring = stripePrice.type === "recurring";
-      // Só aceitamos cartão por padrão. PIX fica atrás de um opt-in explícito no front
-      // (mostrado depois do aviso "cartão recusado?"). Só faz sentido para pagamentos únicos —
-      // PIX não é suportado por Stripe em modo subscription.
-      const paymentMethodTypes: Array<"card" | "pix"> =
-        data.allowPix && !isRecurring ? ["card", "pix"] : ["card"];
+      const usePix = !!data.allowPix;
+      const paymentMethodTypes: Array<"card" | "pix"> = usePix ? ["card", "pix"] : ["card"];
+      const mode: "subscription" | "payment" = usePix ? "payment" : isRecurring ? "subscription" : "payment";
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
-        mode: isRecurring ? "subscription" : "payment",
+        mode,
         ui_mode: "embedded_page",
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
         payment_method_types: paymentMethodTypes,
