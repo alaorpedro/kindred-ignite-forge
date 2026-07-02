@@ -40,6 +40,21 @@ async function getCustomerEmail(subscription: any, env: StripeEnv): Promise<stri
   return null;
 }
 
+async function isBoletoInitialInvoicePaid(subscription: any, env: StripeEnv): Promise<boolean> {
+  if (subscription.metadata?.paymentMethod !== "boleto") return true;
+  const invoiceRef = subscription.latest_invoice;
+  if (!invoiceRef) return false;
+  if (typeof invoiceRef === "object") return invoiceRef.status === "paid" || invoiceRef.paid === true;
+  try {
+    const stripe = createStripeClient(env);
+    const invoice = await stripe.invoices.retrieve(invoiceRef);
+    return invoice.status === "paid" || invoice.paid === true;
+  } catch (error) {
+    console.warn("[webhook] boleto invoice lookup failed", error);
+    return false;
+  }
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId: string | null = subscription.metadata?.userId ?? null;
   const customerEmail = await getCustomerEmail(subscription, env);
@@ -50,6 +65,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const productId = item?.price?.product;
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+  const invoicePaid = await isBoletoInitialInvoicePaid(subscription, env);
 
   const supabase = getSupabase();
   const linkedUserId: string | null = userId;
@@ -62,9 +78,9 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
       stripe_customer_id: subscription.customer,
       product_id: productId,
       price_id: priceId,
-      status: subscription.status,
-      current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
-      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+      status: invoicePaid ? subscription.status : "incomplete",
+      current_period_start: invoicePaid && periodStart ? new Date(periodStart * 1000).toISOString() : null,
+      current_period_end: invoicePaid && periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
       environment: env,
       updated_at: new Date().toISOString(),
     },
@@ -84,7 +100,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   if (linkedUserId) {
     const { error } = await supabase.from("profiles").update({
       plan,
-      subscription_status: subscription.status,
+      subscription_status: invoicePaid ? subscription.status : "incomplete",
       stripe_customer_id: subscription.customer,
     }).eq("id", linkedUserId);
     requireOk(error, "profiles.update(created)");
@@ -101,14 +117,15 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
   const productId = item?.price?.product;
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+  const invoicePaid = await isBoletoInitialInvoicePaid(subscription, env);
 
   const supabase = getSupabase();
   const { error: updErr } = await supabase.from("subscriptions").update({
-    status: subscription.status,
+    status: invoicePaid ? subscription.status : "incomplete",
     product_id: productId,
     price_id: priceId,
-    current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
-    current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+    current_period_start: invoicePaid && periodStart ? new Date(periodStart * 1000).toISOString() : null,
+    current_period_end: invoicePaid && periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
     cancel_at_period_end: subscription.cancel_at_period_end || false,
     updated_at: new Date().toISOString(),
   }).eq("stripe_subscription_id", subscription.id).eq("environment", env);
@@ -117,7 +134,7 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
   const userId = subscription.metadata?.userId;
   if (userId) {
     const { error } = await supabase.from("profiles").update({
-      subscription_status: subscription.status,
+      subscription_status: invoicePaid ? subscription.status : "incomplete",
     }).eq("id", userId);
     requireOk(error, "profiles.update(updated)");
   }
