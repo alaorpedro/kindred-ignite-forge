@@ -157,6 +157,7 @@ async function resolveOrCreateCustomer(
   const created = await stripe.customers.create({
     ...(options.email && { email: options.email }),
     metadata: { userId: options.userId },
+    preferred_locales: ["pt-BR"],
   });
   return created.id;
 }
