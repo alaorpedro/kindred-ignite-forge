@@ -99,7 +99,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const plan = planMap[priceId] ?? "free";
   if (linkedUserId) {
     const { error } = await supabase.from("profiles").update({
-      plan,
+      ...(invoicePaid && { plan }),
       subscription_status: invoicePaid ? subscription.status : "incomplete",
       stripe_customer_id: subscription.customer,
     }).eq("id", linkedUserId);
