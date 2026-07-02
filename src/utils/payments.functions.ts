@@ -163,7 +163,16 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
 
       const item = subscription.items?.data?.[0];
       const productId = typeof stripePrice.product === "string" ? stripePrice.product : stripePrice.product?.id;
-      const latestInvoice = typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null;
+      let latestInvoice: any = typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null;
+      if (typeof subscription.latest_invoice === "string") {
+        latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice);
+      }
+      if (latestInvoice?.id && latestInvoice.status === "draft") {
+        latestInvoice = await stripe.invoices.finalizeInvoice(latestInvoice.id);
+      }
+      if (latestInvoice?.id && !latestInvoice.hosted_invoice_url && latestInvoice.status !== "paid") {
+        latestInvoice = await stripe.invoices.retrieve(latestInvoice.id);
+      }
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.from("subscriptions").upsert(
         {
