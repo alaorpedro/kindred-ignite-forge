@@ -44,11 +44,11 @@ async function isBoletoInitialInvoicePaid(subscription: any, env: StripeEnv): Pr
   if (subscription.metadata?.paymentMethod !== "boleto") return true;
   const invoiceRef = subscription.latest_invoice;
   if (!invoiceRef) return false;
-  if (typeof invoiceRef === "object") return invoiceRef.status === "paid" || invoiceRef.paid === true;
+  if (typeof invoiceRef === "object") return invoiceRef.status === "paid" || (invoiceRef as any).paid === true;
   try {
     const stripe = createStripeClient(env);
     const invoice = await stripe.invoices.retrieve(invoiceRef);
-    return invoice.status === "paid" || invoice.paid === true;
+    return invoice.status === "paid" || (invoice as any).paid === true;
   } catch (error) {
     console.warn("[webhook] boleto invoice lookup failed", error);
     return false;
